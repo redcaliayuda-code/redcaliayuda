@@ -84,6 +84,18 @@ export default async function Landing() {
             </div>
           </Link>
           <Link
+            href="/cerca"
+            className="toque-activo flex items-center gap-4 rounded-2xl border-2 border-acento bg-acento-suave px-5 py-5 transition hover:opacity-90"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-acento/20 text-2xl">
+              📍
+            </div>
+            <div>
+              <div className="text-lg font-bold text-acento">Cerca de mi</div>
+              <div className="text-sm text-texto-suave">Ver necesidades por distancia GPS</div>
+            </div>
+          </Link>
+          <Link
             href="/necesidades"
             className="toque-activo flex items-center gap-4 rounded-2xl border-2 border-borde bg-superficie px-5 py-5 transition hover:border-acento"
           >

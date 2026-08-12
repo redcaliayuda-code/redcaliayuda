@@ -23,11 +23,22 @@ const PRIO: Record<string, { label: string; tono: "alerta" | "aviso" | "acento" 
   P4: { label: "P4 — APOYO", tono: "ok" },
 };
 
-export default async function NecesidadDetalle({ params }: { params: Promise<{ id: string }> }) {
+export default async function NecesidadDetalle({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ mision?: string; vid?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
 
   const necesidad = await prisma.need.findUnique({ where: { id }, include: { missions: { include: { volunteer: true } } } });
   if (!necesidad) notFound();
+
+  const volNotificar = sp.vid
+    ? await prisma.volunteer.findUnique({ where: { id: sp.vid } })
+    : null;
 
   const voluntarios = await prisma.volunteer.findMany({
     where: { disponibilidad: { not: "INDEFINIDO" } },
@@ -65,7 +76,7 @@ export default async function NecesidadDetalle({ params }: { params: Promise<{ i
 
     await registrarEvento({ entidad: "Mission", entidadId: codigo, tipo: "MISION_CREADA", actor: "coordinador" });
 
-    redirect(`/panel/necesidades/${needId}`);
+    redirect(`/panel/necesidades/${needId}?mision=${codigo}&vid=${volunteerId}`);
   }
 
   async function cambiarEstado(formData: FormData) {
@@ -88,6 +99,32 @@ export default async function NecesidadDetalle({ params }: { params: Promise<{ i
       <Link href="/panel/necesidades" className="text-sm text-acento hover:underline">
         ← Volver a necesidades
       </Link>
+
+      {/* WhatsApp notification banner */}
+      {sp.mision && volNotificar && (
+        <div className="mt-4 rounded-xl border border-ok/30 bg-ok-suave p-4 animar-entrada">
+          <div className="text-sm font-bold text-ok">Mision {sp.mision} creada</div>
+          <p className="mt-1 text-xs text-texto-suave">
+            Voluntario asignado: <strong>{volNotificar.nombre}</strong> — {volNotificar.celular}
+          </p>
+          <a
+            href={`https://wa.me/57${volNotificar.celular}?text=${encodeURIComponent(
+              `Hola ${volNotificar.nombre}, te hemos asignado la misión ${sp.mision} de RED CALI.\n\n` +
+              `📋 Necesidad: ${CAT[necesidad.categoria] ?? necesidad.categoria}\n` +
+              `📍 Ubicación: ${necesidad.direccion || necesidad.zona || necesidad.ciudad}\n` +
+              `👤 Contacto: ${necesidad.contactoNombre} — ${necesidad.contactoCelular}\n` +
+              `⚡ Prioridad: ${necesidad.prioridad}\n` +
+              (necesidad.lat && necesidad.lng ? `🗺️ Mapa: https://www.google.com/maps?q=${necesidad.lat},${necesidad.lng}\n` : "") +
+              `\nGracias por tu ayuda. 🙏`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="toque-activo mt-3 inline-flex items-center gap-2 rounded-lg bg-ok px-4 py-2.5 text-sm font-semibold text-superficie"
+          >
+            💬 Notificar por WhatsApp
+          </a>
+        </div>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {/* Info principal */}
@@ -209,9 +246,25 @@ export default async function NecesidadDetalle({ params }: { params: Promise<{ i
                       <Badge tono={tonoEstado(m.estado)}>{m.estado}</Badge>
                     </div>
                     {m.volunteer && (
-                      <p className="mt-1 text-xs text-texto-suave">
-                        {m.volunteer.nombre} — {m.volunteer.celular}
-                      </p>
+                      <>
+                        <p className="mt-1 text-xs text-texto-suave">
+                          {m.volunteer.nombre} — {m.volunteer.celular}
+                        </p>
+                        <a
+                          href={`https://wa.me/57${m.volunteer.celular}?text=${encodeURIComponent(
+                            `Hola ${m.volunteer.nombre}, actualización de tu misión ${m.codigo} (RED CALI).\n` +
+                            `📋 ${CAT[necesidad.categoria] ?? necesidad.categoria}\n` +
+                            `📍 ${necesidad.direccion || necesidad.zona || necesidad.ciudad}\n` +
+                            `👤 ${necesidad.contactoNombre} — ${necesidad.contactoCelular}` +
+                            (necesidad.lat && necesidad.lng ? `\n🗺️ https://www.google.com/maps?q=${necesidad.lat},${necesidad.lng}` : "")
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="toque-activo mt-2 inline-flex items-center gap-1 rounded-md bg-ok px-2 py-1 text-xs font-medium text-superficie"
+                        >
+                          💬 WhatsApp
+                        </a>
+                      </>
                     )}
                   </div>
                 ))}

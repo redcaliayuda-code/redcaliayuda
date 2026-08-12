@@ -24,6 +24,7 @@ export function UbicacionPicker({
 }: Props) {
   const [detectando, setDetectando] = useState(false);
   const [error, setError] = useState("");
+  const [precision, setPrecision] = useState<number | null>(null);
 
   const detectar = useCallback(() => {
     if (!navigator.geolocation) {
@@ -36,13 +37,14 @@ export function UbicacionPicker({
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
+        setPrecision(Math.round(accuracy));
         let dir = direccion;
         let zon = zona;
 
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1&accept-language=es&zoom=18`,
           );
           const data = await res.json();
           const a = data.address ?? {};
@@ -67,9 +69,11 @@ export function UbicacionPicker({
           setError("La detección de ubicación tardó demasiado.");
         }
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }, [direccion, zona, onCoordsChange]);
+
+  const detectado = lat != null && lng != null;
 
   return (
     <div className="space-y-4">
@@ -77,45 +81,74 @@ export function UbicacionPicker({
         type="button"
         onClick={detectar}
         disabled={detectando}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-acento bg-acento-suave px-4 py-3 text-sm font-medium text-acento transition hover:opacity-80 disabled:opacity-50 sm:w-auto"
+        className={`toque-activo flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 text-sm font-semibold transition ${
+          detectado
+            ? "border-2 border-ok bg-ok-suave text-ok"
+            : "border-2 border-acento bg-acento-suave text-acento"
+        } disabled:opacity-50`}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
-        </svg>
-        {detectando ? "Detectando…" : "Detectar mi ubicación"}
+        {detectando ? (
+          <>
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" />
+            </svg>
+            Detectando ubicación...
+          </>
+        ) : detectado ? (
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            Ubicación detectada — toca para actualizar
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+            </svg>
+            Detectar mi ubicación con GPS
+          </>
+        )}
       </button>
 
       {error && <Aviso tono="alerta">{error}</Aviso>}
 
-      <div className="overflow-hidden rounded-lg border border-borde">
+      <div className="overflow-hidden rounded-xl border border-borde">
         <iframe
           title="Mapa de ubicación"
           src={
-            lat != null && lng != null
-              ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.005}%2C${lat - 0.003}%2C${lng + 0.005}%2C${lat + 0.003}&layer=mapnik&marker=${lat}%2C${lng}`
+            detectado
+              ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng! - 0.003}%2C${lat! - 0.002}%2C${lng! + 0.003}%2C${lat! + 0.002}&layer=mapnik&marker=${lat}%2C${lng}`
               : `https://www.openstreetmap.org/export/embed.html?bbox=-76.58%2C3.38%2C-76.49%2C3.48&layer=mapnik`
           }
           className="h-48 w-full sm:h-56"
           style={{ border: "none" }}
         />
-        {lat != null && lng != null && (
-          <div className="flex items-center gap-2 bg-superficie-elevada px-3 py-1.5 text-xs text-texto-suave">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5 shrink-0 text-acento">
-              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <span>Ubicación detectada: {lat.toFixed(5)}, {lng.toFixed(5)}</span>
+        {detectado && (
+          <div className="flex items-center justify-between bg-superficie-elevada px-3 py-2">
+            <div className="flex items-center gap-2 text-xs text-ok">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 shrink-0">
+                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              <span className="font-medium">{lat!.toFixed(6)}, {lng!.toFixed(6)}</span>
+            </div>
+            {precision != null && (
+              <span className="text-xs text-texto-suave">
+                ±{precision}m
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Campo etiqueta="Barrio o zona">
           <input
             name="zona"
             className={claseInput}
-            placeholder="Chapinero"
+            placeholder="Siloé, Aguablanca, Centro..."
             value={zona}
             onChange={(e) => onZonaChange(e.target.value)}
             required
@@ -130,11 +163,11 @@ export function UbicacionPicker({
           />
         </Campo>
       </div>
-      <Campo etiqueta="Dirección" ayuda="Incluye piso o apartamento si aplica.">
+      <Campo etiqueta="Dirección exacta" ayuda="Entre más precisa, más rápido llega la ayuda. Incluye referencias (cerca de..., frente a...).">
         <input
           name="direccion"
           className={claseInput}
-          placeholder="Calle 63 # 9-40, apto 302"
+          placeholder="Cra 50 con Calle 1, casa azul frente a la tienda"
           value={direccion}
           onChange={(e) => onDireccionChange(e.target.value)}
           required

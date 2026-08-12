@@ -19,7 +19,7 @@ const Esquema = z.object({
     .transform(normalizarCelular)
     .refine((v) => v.length >= 10, "El celular debe tener al menos 10 dígitos."),
   zona: z.string().trim().default(""),
-  ciudad: z.string().trim().default("Cali"),
+  ciudad: z.string().trim().default(""),
   lat: z.string().trim().default(""),
   lng: z.string().trim().default(""),
 });

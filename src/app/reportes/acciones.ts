@@ -11,7 +11,7 @@ const Esquema = z.object({
   descripcion: z.string().trim().min(5, "Describe la situacion con mas detalle."),
   direccion: z.string().trim().default(""),
   zona: z.string().trim().min(2, "Indica el barrio o la zona."),
-  ciudad: z.string().trim().default("Cali"),
+  ciudad: z.string().trim().default(""),
   reportadoPor: z.string().trim().min(2, "Escribe tu nombre."),
   celular: z
     .string()

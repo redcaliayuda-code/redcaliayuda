@@ -109,7 +109,7 @@ export default async function NecesidadDetalle({
           </p>
           <a
             href={`https://wa.me/57${volNotificar.celular}?text=${encodeURIComponent(
-              `Hola ${volNotificar.nombre}, te hemos asignado la misión ${sp.mision} de RED CALI.\n\n` +
+              `Hola ${volNotificar.nombre}, te hemos asignado la misión ${sp.mision} de HumansCol.\n\n` +
               `📋 Necesidad: ${CAT[necesidad.categoria] ?? necesidad.categoria}\n` +
               `📍 Ubicación: ${necesidad.direccion || necesidad.zona || necesidad.ciudad}\n` +
               `👤 Contacto: ${necesidad.contactoNombre} — ${necesidad.contactoCelular}\n` +
@@ -252,7 +252,7 @@ export default async function NecesidadDetalle({
                         </p>
                         <a
                           href={`https://wa.me/57${m.volunteer.celular}?text=${encodeURIComponent(
-                            `Hola ${m.volunteer.nombre}, actualización de tu misión ${m.codigo} (RED CALI).\n` +
+                            `Hola ${m.volunteer.nombre}, actualización de tu misión ${m.codigo} (HumansCol).\n` +
                             `📋 ${CAT[necesidad.categoria] ?? necesidad.categoria}\n` +
                             `📍 ${necesidad.direccion || necesidad.zona || necesidad.ciudad}\n` +
                             `👤 ${necesidad.contactoNombre} — ${necesidad.contactoCelular}` +

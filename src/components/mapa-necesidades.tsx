@@ -48,8 +48,8 @@ const CAT_LABEL: Record<string, string> = {
 };
 
 export function MapaNecesidades({ puntos }: { puntos: Punto[] }) {
-  const centerLat = 3.4372;
-  const centerLng = -76.5225;
+  const centerLat = 4.1;
+  const centerLng = -76.0;
 
   const puntosConGeo = puntos.filter((p) => p.lat && p.lng);
 
@@ -57,8 +57,8 @@ export function MapaNecesidades({ puntos }: { puntos: Punto[] }) {
     return (
       <div className="relative overflow-hidden rounded-lg border border-borde">
         <iframe
-          title="Mapa de Cali"
-          src={`https://www.openstreetmap.org/export/embed.html?bbox=-76.58%2C3.38%2C-76.49%2C3.48&layer=mapnik`}
+          title="Mapa de Colombia"
+          src={`https://www.openstreetmap.org/export/embed.html?bbox=-76.7%2C3.3%2C-75.4%2C5.1&layer=mapnik`}
           className="h-64 w-full sm:h-80"
           style={{ border: "none" }}
         />

@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 
 const ICONOS_EMERGENCIA: { tipo: string; icono: string; nombre: string; telefono: string }[] = [
   { tipo: "emergencia", icono: "🚨", nombre: "Linea de emergencias", telefono: "123" },
-  { tipo: "bomberos", icono: "🚒", nombre: "Bomberos Cali", telefono: "119" },
+  { tipo: "bomberos", icono: "🚒", nombre: "Bomberos", telefono: "119" },
   { tipo: "cruz_roja", icono: "🏥", nombre: "Cruz Roja", telefono: "132" },
   { tipo: "defensa_civil", icono: "🛡️", nombre: "Defensa Civil", telefono: "144" },
-  { tipo: "gestion_riesgo", icono: "📋", nombre: "Gestion del Riesgo Cali", telefono: "112" },
+  { tipo: "gestion_riesgo", icono: "📋", nombre: "Gestion del Riesgo", telefono: "112" },
 ];
 
 export default async function RecursosPage() {
@@ -25,7 +25,7 @@ export default async function RecursosPage() {
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-sm font-bold tracking-tight text-acento">
-            RED CALI
+            HumansCol
           </Link>
           <nav className="flex items-center gap-3 text-xs">
             <Link href="/necesidades" className="text-texto-suave hover:text-texto">Necesidades</Link>

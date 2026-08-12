@@ -3,9 +3,9 @@ import "./globals.css";
 import { BotonSOS } from "@/components/boton-sos";
 
 export const metadata: Metadata = {
-  title: "RED CALI — Ayuda Humanitaria Coordinada",
+  title: "HumansCol — Ayuda Humanitaria Coordinada",
   description:
-    "La ayuda correcta, en el lugar correcto. Plataforma de coordinación humanitaria para la zona afectada por el terremoto en Cali y el Pacífico colombiano.",
+    "La ayuda correcta, en el lugar correcto. Plataforma de coordinación humanitaria para las zonas afectadas por el terremoto en Colombia.",
 };
 
 export default function RootLayout({

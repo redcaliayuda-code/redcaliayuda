@@ -137,7 +137,7 @@ export function FormularioPersona() {
       </Card>
 
       <Campo etiqueta="Ciudad">
-        <input name="ciudad" className={claseInput} defaultValue="Cali" />
+        <input name="ciudad" className={claseInput} placeholder="Cali, Manizales, Pereira…" />
       </Campo>
 
       {estado.error && <Aviso tono="alerta">{estado.error}</Aviso>}

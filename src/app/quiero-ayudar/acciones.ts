@@ -22,7 +22,7 @@ const Esquema = z.object({
   capacidadCarga: z.string().trim().default(""),
   disponibilidad: z.string().trim().default("HOY"),
   zona: z.string().trim().default(""),
-  ciudad: z.string().trim().default("Cali"),
+  ciudad: z.string().trim().default(""),
   lat: z.string().trim().default(""),
   lng: z.string().trim().default(""),
 });

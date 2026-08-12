@@ -120,7 +120,7 @@ export function UbicacionPicker({
           src={
             detectado
               ? `https://www.openstreetmap.org/export/embed.html?bbox=${lng! - 0.003}%2C${lat! - 0.002}%2C${lng! + 0.003}%2C${lat! + 0.002}&layer=mapnik&marker=${lat}%2C${lng}`
-              : `https://www.openstreetmap.org/export/embed.html?bbox=-76.58%2C3.38%2C-76.49%2C3.48&layer=mapnik`
+              : `https://www.openstreetmap.org/export/embed.html?bbox=-76.7%2C3.3%2C-75.4%2C5.1&layer=mapnik`
           }
           className="h-48 w-full sm:h-56"
           style={{ border: "none" }}
@@ -159,7 +159,7 @@ export function UbicacionPicker({
             name="ciudad"
             className={claseInput}
             placeholder="Cali, Buenaventura, Tumaco…"
-            defaultValue="Cali"
+            defaultValue=""
           />
         </Campo>
       </div>

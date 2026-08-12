@@ -23,7 +23,7 @@ const Esquema = z.object({
     .refine((v) => v.length >= 10, "El celular debe tener al menos 10 dígitos."),
   direccion: z.string().trim().min(3, "Necesitamos saber dónde estás."),
   zona: z.string().trim().min(2, "Indica el barrio o la zona."),
-  ciudad: z.string().trim().default("Cali"),
+  ciudad: z.string().trim().default(""),
   lat: z.string().trim().default(""),
   lng: z.string().trim().default(""),
 });

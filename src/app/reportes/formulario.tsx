@@ -105,7 +105,7 @@ export function FormularioReporte() {
         </div>
         <div className="mt-4">
           <Campo etiqueta="Ciudad">
-            <input name="ciudad" className={claseInput} defaultValue="Cali" />
+            <input name="ciudad" className={claseInput} placeholder="Cali, Manizales, Pereira…" />
           </Campo>
         </div>
       </Card>

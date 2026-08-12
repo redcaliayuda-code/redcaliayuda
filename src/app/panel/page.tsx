@@ -68,7 +68,7 @@ export default async function PanelPage() {
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight">Centro de operaciones</h1>
-      <p className="mt-1 text-sm text-texto-suave">Resumen en tiempo real de RED CALI.</p>
+      <p className="mt-1 text-sm text-texto-suave">Resumen en tiempo real de HumansCol.</p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Metrica etiqueta="Necesidades activas" valor={String(pendientes)} tono={pendientes > 0 ? "aviso" : undefined} />

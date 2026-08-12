@@ -15,7 +15,7 @@ export default async function Landing() {
       {/* Header fijo */}
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-          <div className="text-sm font-bold tracking-tight text-acento">RED CALI</div>
+          <div className="text-sm font-bold tracking-tight text-acento">HumansCol</div>
           <nav className="flex items-center gap-3 text-xs">
             <Link href="/necesidades" className="text-texto-suave hover:text-texto">
               Necesidades
@@ -39,7 +39,7 @@ export default async function Landing() {
               <span className="text-xs font-bold text-alerta tracking-wide uppercase">Emergencia activa</span>
             </div>
             <p className="mt-1 text-sm font-medium text-alerta">
-              Terremoto del 10 de agosto — Cali y Pacífico colombiano
+              Terremoto del 10 de agosto — Colombia
             </p>
           </div>
         </section>
@@ -227,7 +227,7 @@ export default async function Landing() {
 
         {/* Principios */}
         <section className="mt-10 rounded-xl border border-borde bg-superficie p-5">
-          <h2 className="text-sm font-bold">Principios de RED CALI</h2>
+          <h2 className="text-sm font-bold">Principios de HumansCol</h2>
           <ul className="mt-3 space-y-2 text-xs text-texto-suave leading-relaxed">
             <li className="flex gap-2"><span className="text-acento">→</span> Toda información se verifica antes de actuar.</li>
             <li className="flex gap-2"><span className="text-acento">→</span> Complementamos a las autoridades, no las reemplazamos.</li>
@@ -238,7 +238,7 @@ export default async function Landing() {
         </section>
 
         <footer className="mt-8 border-t border-borde py-6 text-center text-xs text-texto-suave">
-          RED CALI — Coordinación humanitaria ciudadana.
+          HumansCol — Coordinación humanitaria ciudadana.
           <br />
           Complementa los canales oficiales, no los reemplaza.
         </footer>

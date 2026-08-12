@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --fondo: #fbfbfa;
+  --superficie: #ffffff;
+  --borde: #e4e4e7;
+  --texto: #18181b;
+  --texto-suave: #71717a;
+  --acento: #0f766e;
+  --acento-suave: #ccfbf1;
+  --alerta: #b91c1c;
+  --alerta-suave: #fee2e2;
+  --aviso: #a16207;
+  --aviso-suave: #fef3c7;
+  --ok: #15803d;
+  --ok-suave: #dcfce7;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --fondo: #0b0b0d;
+    --superficie: #141417;
+    --borde: #27272a;
+    --texto: #f4f4f5;
+    --texto-suave: #a1a1aa;
+    --acento: #2dd4bf;
+    --acento-suave: #134e4a;
+    --alerta: #fca5a5;
+    --alerta-suave: #450a0a;
+    --aviso: #fcd34d;
+    --aviso-suave: #451a03;
+    --ok: #86efac;
+    --ok-suave: #052e16;
   }
 }
 
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-borde: var(--borde);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-acento: var(--acento);
+  --color-acento-suave: var(--acento-suave);
+  --color-alerta: var(--alerta);
+  --color-alerta-suave: var(--alerta-suave);
+  --color-aviso: var(--aviso);
+  --color-aviso-suave: var(--aviso-suave);
+  --color-ok: var(--ok);
+  --color-ok-suave: var(--ok-suave);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabulares para que las columnas de pesos no bailen. */
+.cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+input,
+select,
+textarea {
+  color: var(--texto);
+  background: var(--superficie);
+}
+
+::placeholder {
+  color: var(--texto-suave);
 }

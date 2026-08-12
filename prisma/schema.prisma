@@ -1,0 +1,171 @@
+// RED CALI — Sistema Operativo Ciudadano de Ayuda Humanitaria
+//
+// Plataforma de coordinación para la zona afectada por el terremoto
+// del 10 de agosto de 2026 en Cali y el Pacífico colombiano.
+//
+// Principio: NECESIDAD → VERIFICACIÓN → RECURSO → MISIÓN → ENTREGA → CONFIRMACIÓN
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// NECESIDADES — qué hace falta y dónde
+// ---------------------------------------------------------------------------
+
+model Need {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  // Ubicación
+  lat       Float?
+  lng       Float?
+  direccion String @default("")
+  zona      String @default("")
+  ciudad    String @default("Cali")
+
+  // Qué se necesita
+  categoria   String // AGUA | ALIMENTOS | MEDICAMENTOS | HIGIENE | PANALES | REFUGIO | COBIJAS | CARPAS | LINTERNAS | HERRAMIENTAS | ATENCION_MEDICA | ATENCION_PSICOLOGICA | ATENCION_VETERINARIA | TRANSPORTE | ALOJAMIENTO | EVACUACION | DESAPARECIDOS | OTRO
+  descripcion String
+  cantidad    String @default("")
+
+  // A quién afecta
+  personasAfectadas    Int    @default(1)
+  ninos                Int    @default(0)
+  adultosMayores       Int    @default(0)
+  necesidadesEspeciales String @default("")
+
+  // Prioridad
+  prioridad String @default("P2") // P1_VIDA | P2_SUPERVIVENCIA | P3_RECUPERACION | P4_APOYO
+
+  // Contacto
+  contactoNombre  String
+  contactoCelular String
+
+  // Verificación
+  fuente             String @default("CIUDADANO") // AUTORIDAD | ORGANIZACION | VOLUNTARIO | CIUDADANO | REDES
+  estadoVerificacion String @default("NO_VERIFICADO") // NO_VERIFICADO | EN_VERIFICACION | VERIFICADO | DESCARTADO
+  estadoResolucion   String @default("PENDIENTE") // PENDIENTE | EN_PROCESO | RESUELTO | CERRADO
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  missions Mission[]
+
+  @@index([prioridad, estadoResolucion])
+  @@index([ciudad, zona])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// VOLUNTARIOS — quién puede ayudar y con qué
+// ---------------------------------------------------------------------------
+
+model Volunteer {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  nombre  String
+  celular String @unique
+  email   String @default("")
+
+  lat    Float?
+  lng    Float?
+  ciudad String @default("Cali")
+  zona   String @default("")
+
+  // Qué ofrece
+  tipoAyuda       String // VOLUNTARIO | ESPECIALISTA | RECURSOS | LOGISTICA
+  especializacion  String @default("") // medico, ingeniero, psicologo, etc.
+  recursosOfrecidos String @default("") // texto libre: qué tiene para donar
+  descripcion      String @default("")
+
+  // Logística
+  vehiculo       String @default("NINGUNO") // NINGUNO | MOTO | AUTO | CAMIONETA | CAMION
+  capacidadCarga String @default("")
+
+  // Disponibilidad
+  disponibilidad String @default("HOY") // AHORA | HOY | VARIOS_DIAS | INDEFINIDO
+
+  verificado          Boolean @default(false)
+  misionesCompletadas Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  missions Mission[]
+
+  @@index([ciudad])
+  @@index([tipoAyuda])
+}
+
+// ---------------------------------------------------------------------------
+// MISIONES — la unidad de acción
+// ---------------------------------------------------------------------------
+
+model Mission {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  needId      String
+  volunteerId String?
+
+  prioridad   String @default("P2")
+  estado      String @default("PENDIENTE") // PENDIENTE | ASIGNADA | EN_CAMINO | ENTREGADA | VERIFICADA | CANCELADA
+  descripcion String @default("")
+
+  createdAt DateTime  @default(now())
+  cerradoAt DateTime?
+
+  need      Need       @relation(fields: [needId], references: [id])
+  volunteer Volunteer? @relation(fields: [volunteerId], references: [id])
+
+  @@index([estado])
+  @@index([prioridad])
+}
+
+// ---------------------------------------------------------------------------
+// CENTROS DE ACOPIO — inventario inteligente
+// ---------------------------------------------------------------------------
+
+model CollectionCenter {
+  id        String @id @default(cuid())
+  nombre    String
+  direccion String
+  zona      String @default("")
+  ciudad    String @default("Cali")
+  lat       Float?
+  lng       Float?
+
+  responsable String
+  celular     String
+  horario     String @default("")
+
+  necesitan   String @default("") // qué necesitan recibir
+  noNecesitan String @default("") // qué NO deben enviar
+
+  activo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// EVENTOS — trazabilidad completa
+// ---------------------------------------------------------------------------
+
+model EventLog {
+  id        String   @id @default(cuid())
+  entidad   String
+  entidadId String
+  tipo      String
+  actor     String   @default("sistema")
+  payload   String   @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([entidad, entidadId])
+  @@index([tipo, createdAt])
+}

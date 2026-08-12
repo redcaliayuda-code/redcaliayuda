@@ -154,6 +154,75 @@ model CollectionCenter {
 }
 
 // ---------------------------------------------------------------------------
+// PERSONAS — "Estoy bien" / "Busco a alguien"
+// ---------------------------------------------------------------------------
+
+model PersonReport {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  tipo String // ESTOY_BIEN | BUSCO_PERSONA
+
+  // Datos de la persona reportada / buscada
+  nombrePersona   String
+  edad            String @default("")
+  descripcion     String @default("")
+  ultimaUbicacion String @default("")
+
+  // Contacto de quien reporta
+  contactoNombre  String
+  contactoCelular String
+
+  // Ubicación GPS
+  lat    Float?
+  lng    Float?
+  zona   String @default("")
+  ciudad String @default("Cali")
+
+  estado String @default("ACTIVO") // ACTIVO | ENCONTRADO | CERRADO
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nombrePersona])
+  @@index([tipo, estado])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// REPORTES DE ZONA — estado de infraestructura
+// ---------------------------------------------------------------------------
+
+model ZoneReport {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  tipo String // VIA_BLOQUEADA | VIA_HABILITADA | SIN_LUZ | SIN_AGUA | EDIFICIO_DANADO | HOSPITAL_OPERATIVO | HOSPITAL_COLAPSADO | ALBERGUE_DISPONIBLE | ZONA_RIESGO | OTRO
+
+  descripcion String
+  direccion   String @default("")
+  zona        String @default("")
+  ciudad      String @default("Cali")
+
+  lat Float?
+  lng Float?
+
+  // Quien reporta
+  reportadoPor String
+  celular      String @default("")
+
+  verificado Boolean @default(false)
+  activo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tipo, activo])
+  @@index([zona])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
 // EVENTOS — trazabilidad completa
 // ---------------------------------------------------------------------------
 

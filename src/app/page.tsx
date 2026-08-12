@@ -20,6 +20,9 @@ export default async function Landing() {
             <Link href="/necesidades" className="text-texto-suave hover:text-texto">
               Necesidades
             </Link>
+            <Link href="/personas" className="text-texto-suave hover:text-texto">
+              Personas
+            </Link>
             <Link href="/panel" className="text-texto-suave hover:text-texto">
               Panel
             </Link>
@@ -90,6 +93,46 @@ export default async function Landing() {
             <div>
               <div className="text-lg font-bold">Ver necesidades</div>
               <div className="text-sm text-texto-suave">Qué hace falta ahora mismo</div>
+            </div>
+          </Link>
+        </section>
+
+        {/* Nuevas funcionalidades */}
+        <section className="mt-3 grid gap-3 sm:grid-cols-3 animar-entrada" style={{ animationDelay: "250ms" }}>
+          <Link
+            href="/personas"
+            className="toque-activo flex items-center gap-3 rounded-2xl border border-borde bg-superficie px-4 py-4 transition hover:border-acento"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ok-suave text-xl">
+              👥
+            </div>
+            <div>
+              <div className="text-sm font-bold">Buscar personas</div>
+              <div className="text-xs text-texto-suave">Estoy bien / Busco a alguien</div>
+            </div>
+          </Link>
+          <Link
+            href="/reportes"
+            className="toque-activo flex items-center gap-3 rounded-2xl border border-borde bg-superficie px-4 py-4 transition hover:border-acento"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-aviso-suave text-xl">
+              📡
+            </div>
+            <div>
+              <div className="text-sm font-bold">Estado de zona</div>
+              <div className="text-xs text-texto-suave">Vias, luz, agua, albergues</div>
+            </div>
+          </Link>
+          <Link
+            href="/recursos"
+            className="toque-activo flex items-center gap-3 rounded-2xl border border-borde bg-superficie px-4 py-4 transition hover:border-acento"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-alerta-suave text-xl">
+              🚨
+            </div>
+            <div>
+              <div className="text-sm font-bold">Emergencia</div>
+              <div className="text-xs text-texto-suave">Numeros y recursos</div>
             </div>
           </Link>
         </section>

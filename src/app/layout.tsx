@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { BotonSOS } from "@/components/boton-sos";
 
 export const metadata: Metadata = {
   title: "RED CALI — Ayuda Humanitaria Coordinada",
@@ -12,7 +13,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es-CO">
-      <body>{children}</body>
+      <body>
+        {children}
+        <BotonSOS />
+      </body>
     </html>
   );
 }

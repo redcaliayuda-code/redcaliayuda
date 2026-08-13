@@ -5,11 +5,18 @@ import { ListaNecesidades } from "@/components/lista-necesidades";
 export const revalidate = 30;
 
 export default async function NecesidadesPublicas() {
-  const necesidades = await prisma.need.findMany({
-    where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
-    orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
-    take: 50,
-  });
+  const [necesidades, voluntarios] = await Promise.all([
+    prisma.need.findMany({
+      where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
+      orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
+      take: 50,
+    }),
+    prisma.volunteer.findMany({
+      where: { disponibilidad: { not: "INDEFINIDO" } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
   const serialized = necesidades.map((n) => ({
     id: n.id,
@@ -28,6 +35,22 @@ export default async function NecesidadesPublicas() {
     createdAt: n.createdAt.toISOString(),
   }));
 
+  const volSerialized = voluntarios.map((v) => ({
+    id: v.id,
+    codigo: v.codigo,
+    nombre: v.nombre,
+    celular: v.celular,
+    tipoAyuda: v.tipoAyuda,
+    descripcion: v.descripcion,
+    vehiculo: v.vehiculo,
+    capacidadCarga: v.capacidadCarga,
+    disponibilidad: v.disponibilidad,
+    zona: v.zona,
+    ciudad: v.ciudad,
+    lat: v.lat,
+    lng: v.lng,
+  }));
+
   return (
     <main className="min-h-screen safe-bottom">
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
@@ -44,7 +67,7 @@ export default async function NecesidadesPublicas() {
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-5">
-        <ListaNecesidades necesidades={serialized} />
+        <ListaNecesidades necesidades={serialized} voluntarios={volSerialized} />
       </div>
     </main>
   );

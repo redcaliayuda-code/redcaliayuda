@@ -64,7 +64,7 @@ export async function crearVoluntario(
         lng,
       },
     });
-    redirect("/quiero-ayudar/gracias");
+    redirect(`/quiero-ayudar/gracias/${existente.codigo}`);
   }
 
   const codigo = codigoCorto("VOL");
@@ -96,5 +96,5 @@ export async function crearVoluntario(
     payload: { codigo, tipoAyuda: d.tipoAyuda, vehiculo: d.vehiculo },
   });
 
-  redirect("/quiero-ayudar/gracias");
+  redirect(`/quiero-ayudar/gracias/${codigo}`);
 }

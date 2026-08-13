@@ -21,6 +21,22 @@ type Necesidad = {
   createdAt: string;
 };
 
+type Voluntario = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  celular: string;
+  tipoAyuda: string;
+  descripcion: string;
+  vehiculo: string;
+  capacidadCarga: string;
+  disponibilidad: string;
+  zona: string;
+  ciudad: string;
+  lat: number | null;
+  lng: number | null;
+};
+
 const CAT: Record<string, string> = {
   AGUA: "Agua", ALIMENTOS: "Alimentos", MEDICAMENTOS: "Medicamentos",
   HIGIENE: "Higiene", PANALES: "Pañales", REFUGIO: "Refugio",
@@ -72,7 +88,21 @@ function buildMapSrc(lat: number, lng: number, zoom: "close" | "overview", allPo
   return `https://www.openstreetmap.org/export/embed.html?bbox=-76.7%2C3.3%2C-75.4%2C5.1&layer=mapnik`;
 }
 
-export function ListaNecesidades({ necesidades }: { necesidades: Necesidad[] }) {
+const TIPO_LABEL: Record<string, string> = {
+  VOLUNTARIO: "Voluntario", ESPECIALISTA: "Especialista",
+  RECURSOS: "Recursos", LOGISTICA: "Logistica",
+};
+
+const TIPO_ICON: Record<string, string> = {
+  VOLUNTARIO: "🤝", ESPECIALISTA: "⚕️", RECURSOS: "📦", LOGISTICA: "🚛",
+};
+
+const VEHICULO_LABEL: Record<string, string> = {
+  NINGUNO: "", MOTO: "Moto", CARRO: "Carro", CAMIONETA: "Camioneta",
+  CAMION: "Camion", BICICLETA: "Bicicleta",
+};
+
+export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidades: Necesidad[]; voluntarios?: Voluntario[] }) {
   const conGeo = necesidades.filter((n) => n.lat != null && n.lng != null);
   const allPoints = conGeo.map((n) => ({ lat: n.lat!, lng: n.lng! }));
   const p1Count = necesidades.filter((n) => n.prioridad === "P1").length;
@@ -196,7 +226,9 @@ export function ListaNecesidades({ necesidades }: { necesidades: Necesidad[] }) 
                     {n.zona || n.ciudad}
                     {hasGeo && <span className="text-ok"> (GPS)</span>}
                   </span>
-                  <span>{n.personasAfectadas} persona{n.personasAfectadas !== 1 ? "s" : ""}</span>
+                  {n.personasAfectadas > 1 && (
+                    <span>{n.personasAfectadas} personas</span>
+                  )}
                   {n.ninos > 0 && <span>👶 {n.ninos} niño{n.ninos !== 1 ? "s" : ""}</span>}
                   {n.adultosMayores > 0 && <span>👴 {n.adultosMayores}</span>}
                   <span>{formatFecha(n.createdAt)}</span>
@@ -204,6 +236,68 @@ export function ListaNecesidades({ necesidades }: { necesidades: Necesidad[] }) 
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* Voluntarios disponibles */}
+      {voluntarios.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🤝</span>
+            <h2 className="text-lg font-bold tracking-tight">Ayuda disponible</h2>
+            <span className="rounded-full bg-ok-suave px-2 py-0.5 text-xs font-bold text-ok">
+              {voluntarios.length}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-texto-suave">
+            Voluntarios registrados listos para ayudar. Toca para contactar por WhatsApp.
+          </p>
+          <div className="mt-3 space-y-2">
+            {voluntarios.map((v) => {
+              const icon = TIPO_ICON[v.tipoAyuda] ?? "🤝";
+              const tipo = TIPO_LABEL[v.tipoAyuda] ?? v.tipoAyuda;
+              const vehiculo = VEHICULO_LABEL[v.vehiculo];
+              const hasGeo = v.lat != null && v.lng != null;
+
+              return (
+                <a
+                  key={v.id}
+                  href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(
+                    `Hola ${v.nombre}, vi que estas registrado como voluntario en HumansCol. Necesitamos tu ayuda. Puedes coordinar?`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="toque-activo flex items-center gap-3 rounded-xl border border-borde bg-superficie p-4 transition hover:border-ok hover:shadow-md"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ok-suave text-lg">
+                    {icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold">{v.nombre}</span>
+                      <span className="rounded-full bg-acento-suave px-2 py-0.5 text-xs font-medium text-acento">
+                        {tipo}
+                      </span>
+                      {vehiculo && (
+                        <span className="rounded-full bg-aviso-suave px-2 py-0.5 text-xs font-medium text-aviso">
+                          🚗 {vehiculo}
+                        </span>
+                      )}
+                    </div>
+                    {v.descripcion && (
+                      <p className="mt-0.5 text-xs text-texto-suave line-clamp-1">{v.descripcion}</p>
+                    )}
+                    <div className="mt-1 flex items-center gap-2 text-xs text-texto-suave">
+                      <span>{v.zona || v.ciudad}</span>
+                      {hasGeo && <span className="text-ok">(GPS)</span>}
+                      <span>· {v.disponibilidad}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-ok text-lg">💬</div>
+                </a>
+              );
+            })}
+          </div>
         </div>
       )}
 

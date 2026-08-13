@@ -51,6 +51,7 @@ export default async function PanelPage() {
     conVehiculo,
     especialistas,
     ultimas,
+    voluntariosGeo,
   ] = await Promise.all([
     prisma.need.count(),
     prisma.need.count({ where: { estadoResolucion: "PENDIENTE" } }),
@@ -62,6 +63,14 @@ export default async function PanelPage() {
     prisma.need.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
+    }),
+    prisma.volunteer.findMany({
+      where: { lat: { not: null }, lng: { not: null }, disponibilidad: { not: "INDEFINIDO" } },
+      select: {
+        id: true, codigo: true, nombre: true, celular: true,
+        tipoAyuda: true, descripcion: true, vehiculo: true,
+        lat: true, lng: true, zona: true, ciudad: true,
+      },
     }),
   ]);
 
@@ -95,6 +104,18 @@ export default async function PanelPage() {
                 personasAfectadas: n.personasAfectadas,
                 descripcion: n.descripcion,
               }))}
+            voluntarios={voluntariosGeo.map((v) => ({
+              id: v.id,
+              codigo: v.codigo,
+              nombre: v.nombre,
+              celular: v.celular,
+              tipoAyuda: v.tipoAyuda,
+              descripcion: v.descripcion,
+              vehiculo: v.vehiculo,
+              lat: v.lat!,
+              lng: v.lng!,
+              zona: v.zona || v.ciudad,
+            }))}
           />
         </div>
       </div>

@@ -110,12 +110,24 @@ export default async function Landing() {
         </section>
 
         {/* Nuevas funcionalidades */}
-        <section className="mt-3 grid gap-3 sm:grid-cols-3 animar-entrada" style={{ animationDelay: "250ms" }}>
+        <section className="mt-3 grid gap-3 sm:grid-cols-2 animar-entrada" style={{ animationDelay: "250ms" }}>
+          <Link
+            href="/acopio"
+            className="toque-activo flex items-center gap-3 rounded-2xl border-2 border-ok bg-ok-suave px-4 py-4 transition hover:opacity-90"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ok/20 text-xl">
+              📦
+            </div>
+            <div>
+              <div className="text-sm font-bold text-ok">Puntos de acopio</div>
+              <div className="text-xs text-texto-suave">Donde llevar donaciones</div>
+            </div>
+          </Link>
           <Link
             href="/personas"
             className="toque-activo flex items-center gap-3 rounded-2xl border border-borde bg-superficie px-4 py-4 transition hover:border-acento"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ok-suave text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-acento-suave text-xl">
               👥
             </div>
             <div>

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { crearReportePersona, type EstadoFormulario } from "./acciones";
 import { Aviso, Boton, Campo, Card, claseInput } from "@/components/ui";
 import { UbicacionPicker } from "@/components/ubicacion-picker";
+import { Consentimiento } from "@/components/consentimiento";
 
 export function FormularioPersona() {
   const [estado, accion, enviando] = useActionState<EstadoFormulario, FormData>(crearReportePersona, {});
@@ -139,6 +140,8 @@ export function FormularioPersona() {
       <Campo etiqueta="Ciudad">
         <input name="ciudad" className={claseInput} placeholder="Cali, Manizales, Pereira…" />
       </Campo>
+
+      <Consentimiento />
 
       {estado.error && <Aviso tono="alerta">{estado.error}</Aviso>}
 

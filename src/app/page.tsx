@@ -241,6 +241,10 @@ export default async function Landing() {
           HumansCol — Coordinación humanitaria ciudadana.
           <br />
           Complementa los canales oficiales, no los reemplaza.
+          <br />
+          <Link href="/privacidad" className="mt-2 inline-block text-acento hover:underline">
+            Tratamiento de datos personales
+          </Link>
         </footer>
       </div>
     </main>

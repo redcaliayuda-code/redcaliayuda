@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { crearNecesidad, type EstadoFormulario } from "./acciones";
 import { Aviso, Boton, Campo, Card, claseInput } from "@/components/ui";
 import { UbicacionPicker } from "@/components/ubicacion-picker";
+import { Consentimiento } from "@/components/consentimiento";
 
 const CATEGORIAS = [
   { valor: "AGUA", etiqueta: "Agua" },
@@ -166,6 +167,8 @@ export function FormularioNecesidad() {
           </Campo>
         </div>
       </Card>
+
+      <Consentimiento />
 
       {estado.error && (
         <Aviso tono="alerta">{estado.error}</Aviso>

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { crearVoluntario, type EstadoFormulario } from "./acciones";
 import { Aviso, Boton, Campo, Card, claseInput } from "@/components/ui";
 import { UbicacionPicker } from "@/components/ubicacion-picker";
+import { Consentimiento } from "@/components/consentimiento";
 
 const TIPOS_AYUDA = [
   { valor: "VOLUNTARIO", etiqueta: "Voluntario general", nota: "Empacar, transportar, distribuir, cocinar, limpiar" },
@@ -195,6 +196,8 @@ export function FormularioVoluntario() {
           </Campo>
         </div>
       </Card>
+
+      <Consentimiento />
 
       {estado.error && (
         <Aviso tono="alerta">{estado.error}</Aviso>

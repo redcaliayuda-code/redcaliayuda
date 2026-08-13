@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { crearReporteZona, type EstadoFormulario } from "./acciones";
 import { Aviso, Boton, Campo, Card, claseInput } from "@/components/ui";
 import { UbicacionPicker } from "@/components/ubicacion-picker";
+import { Consentimiento } from "@/components/consentimiento";
 
 const TIPOS = [
   { valor: "VIA_BLOQUEADA", etiqueta: "🚧 Via bloqueada", desc: "Calle, carretera o puente intransitable" },
@@ -109,6 +110,8 @@ export function FormularioReporte() {
           </Campo>
         </div>
       </Card>
+
+      <Consentimiento />
 
       {estado.error && <Aviso tono="alerta">{estado.error}</Aviso>}
 

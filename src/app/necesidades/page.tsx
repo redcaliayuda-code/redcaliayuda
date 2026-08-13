@@ -9,12 +9,12 @@ export default async function NecesidadesPublicas() {
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
       orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
-      take: 50,
+      take: 200,
     }),
     prisma.volunteer.findMany({
       where: { disponibilidad: { not: "INDEFINIDO" } },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     }),
   ]);
 

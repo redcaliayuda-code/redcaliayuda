@@ -61,8 +61,9 @@ export default async function PanelPage() {
     prisma.volunteer.count({ where: { vehiculo: { not: "NINGUNO" } } }),
     prisma.volunteer.count({ where: { tipoAyuda: "ESPECIALISTA" } }),
     prisma.need.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
+      where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] }, lat: { not: null } },
+      orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
+      take: 100,
     }),
     prisma.volunteer.findMany({
       where: { lat: { not: null }, lng: { not: null }, disponibilidad: { not: "INDEFINIDO" } },

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { CercaMapa } from "./mapa-cerca";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function CercaPage() {
   const necesidades = await prisma.need.findMany({

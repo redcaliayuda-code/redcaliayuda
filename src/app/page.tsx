@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function Landing() {
   const [necesidades, voluntarios, resueltas] = await Promise.all([

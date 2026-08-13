@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const ICONOS_EMERGENCIA: { tipo: string; icono: string; nombre: string; telefono: string }[] = [
   { tipo: "emergencia", icono: "🚨", nombre: "Linea de emergencias", telefono: "123" },

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui";
 import { haceCuanto } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function PersonasPage({
   searchParams,

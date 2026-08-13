@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui";
 import { fechaHora } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 const CAT: Record<string, string> = {
   AGUA: "Agua", ALIMENTOS: "Alimentos", MEDICAMENTOS: "Medicamentos",

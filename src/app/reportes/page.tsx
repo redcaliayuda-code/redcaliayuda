@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui";
 import { haceCuanto } from "@/lib/format";
 import { FormularioReporte } from "./formulario";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 const TIPO_INFO: Record<string, { icono: string; nombre: string; tono: "ok" | "alerta" | "aviso" | "acento" }> = {
   VIA_BLOQUEADA: { icono: "🚧", nombre: "Via bloqueada", tono: "alerta" },

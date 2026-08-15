@@ -88,7 +88,7 @@ export default async function GraciasVoluntarioPage({ params }: { params: Promis
       (voluntario.descripcion ? `📋 ${voluntario.descripcion}\n` : "") +
       (voluntario.vehiculo !== "NINGUNO" ? `🚗 Vehiculo: ${voluntario.vehiculo}\n` : "") +
       `📍 ${voluntario.zona || voluntario.ciudad}\n` +
-      `\nSi necesitas ayuda: https://redcaliayuda.vercel.app/necesito-ayuda`
+      `\nSi necesitas ayuda: https://redcaliayuda-psi.vercel.app/necesito-ayuda`
     : "";
 
   const allPoints = necesidadesCercanas.length > 0

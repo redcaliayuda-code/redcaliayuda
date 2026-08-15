@@ -165,7 +165,7 @@ export default async function AcopioPage() {
                       (c.horario ? `🕐 ${c.horario}\n` : "") +
                       (c.necesitan ? `✅ Necesitan: ${c.necesitan}\n` : "") +
                       (c.lat && c.lng ? `🗺️ https://www.google.com/maps?q=${c.lat},${c.lng}\n` : "") +
-                      `\nMas info: https://redcaliayuda.vercel.app/acopio`
+                      `\nMas info: https://redcaliayuda-psi.vercel.app/acopio`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

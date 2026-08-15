@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "Collab x Mindo — Ayuda Humanitaria Coordinada",
   description:
     "La ayuda correcta, en el lugar correcto. Plataforma de coordinación humanitaria para las zonas afectadas por el terremoto en Colombia.",
-  metadataBase: new URL("https://redcaliayuda.vercel.app"),
+  metadataBase: new URL("https://redcaliayuda-psi.vercel.app"),
   openGraph: {
     title: "Collab x Mindo — Ayuda Humanitaria Coordinada",
     description:

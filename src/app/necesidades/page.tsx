@@ -32,6 +32,8 @@ export default async function NecesidadesPublicas() {
     ciudad: n.ciudad,
     lat: n.lat,
     lng: n.lng,
+    contactoNombre: n.contactoNombre,
+    contactoCelular: n.contactoCelular,
     createdAt: n.createdAt.toISOString(),
   }));
 

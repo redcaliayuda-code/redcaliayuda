@@ -317,22 +317,29 @@ export default function CoordinarPage() {
                           )}
                         </div>
                         <p className="mt-1 text-sm text-texto-suave line-clamp-2">{n.descripcion}</p>
-                        <div className="mt-1 text-xs text-texto-suave">
-                          {n.zona} · {ESTADO_LABEL[n.estadoResolucion]} · {formatFecha(n.createdAt)}
+                        <div className="mt-1.5 flex items-center gap-1 text-xs font-medium text-texto">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5 text-acento shrink-0">
+                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                          {n.zona || n.ciudad}
                         </div>
+                        <div className="mt-1 text-xs text-texto-suave">
+                          {ESTADO_LABEL[n.estadoResolucion]} · {formatFecha(n.createdAt)}
+                          {n.contactoNombre && <span> · 👤 {n.contactoNombre}</span>}
+                        </div>
+                        {n.contactoCelular && n.contactoCelular !== "0000000000" && (
+                          <a
+                            href={`https://wa.me/57${n.contactoCelular}?text=${encodeURIComponent(`Hola ${n.contactoNombre || ""}, somos coordinadores de Collab x Mindo. Vimos tu necesidad ${n.codigo}. ¿Cómo podemos ayudarte?`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-ok-suave px-3 py-1.5 text-xs font-semibold text-ok transition hover:bg-ok hover:text-superficie"
+                          >
+                            💬 WhatsApp {n.contactoNombre || n.contactoCelular}
+                          </a>
+                        )}
                       </div>
-                      {n.contactoCelular && n.contactoCelular !== "0000000000" && (
-                        <a
-                          href={`https://wa.me/57${n.contactoCelular}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 rounded-lg bg-ok-suave p-2 text-ok transition hover:bg-ok hover:text-superficie"
-                          title="WhatsApp contacto"
-                        >
-                          💬
-                        </a>
-                      )}
                     </div>
 
                     {isSelected && (

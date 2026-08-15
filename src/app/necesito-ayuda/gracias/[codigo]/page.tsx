@@ -59,7 +59,7 @@ export default async function GraciasPage({ params }: { params: Promise<{ codigo
       `👥 ${necesidad.personasAfectadas} persona${necesidad.personasAfectadas !== 1 ? "s" : ""}\n` +
       `⚡ Prioridad: ${necesidad.prioridad}\n` +
       (necesidad.lat && necesidad.lng ? `🗺️ https://www.google.com/maps?q=${necesidad.lat},${necesidad.lng}\n` : "") +
-      `\nSi puedes ayudar, entra a Collab x Mindo: https://redcaliayuda.vercel.app/cerca`
+      `\nSi puedes ayudar, entra a Collab x Mindo: https://redcaliayuda-psi.vercel.app/cerca`
     : "";
 
   return (
@@ -154,7 +154,7 @@ export default async function GraciasPage({ params }: { params: Promise<{ codigo
                 `👥 ${necesidad!.personasAfectadas} persona${necesidad!.personasAfectadas !== 1 ? "s" : ""}\n` +
                 `⚡ ${necesidad!.prioridad}\n` +
                 (necesidad!.lat && necesidad!.lng ? `🗺️ https://www.google.com/maps?q=${necesidad!.lat},${necesidad!.lng}\n` : "") +
-                `\nSi puedes ayudar, entra: https://redcaliayuda.vercel.app/cerca`;
+                `\nSi puedes ayudar, entra: https://redcaliayuda-psi.vercel.app/cerca`;
 
               return (
                 <a

@@ -18,6 +18,8 @@ type Necesidad = {
   ciudad: string;
   lat: number | null;
   lng: number | null;
+  contactoNombre: string | null;
+  contactoCelular: string | null;
   createdAt: string;
 };
 
@@ -242,20 +244,56 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
             style={{ border: "none" }}
           />
           {selectedNeed && (
-            <div className="flex items-center justify-between bg-acento-suave px-3 py-2">
-              <div className="flex items-center gap-2 text-xs font-medium text-acento">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                {CAT_ICON[selectedNeed.categoria]} {CAT[selectedNeed.categoria] ?? selectedNeed.categoria} — {selectedNeed.zona || selectedNeed.ciudad}
+            <div className="bg-acento-suave px-4 py-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-xs font-medium text-acento">
+                    {CAT_ICON[selectedNeed.categoria]} {CAT[selectedNeed.categoria] ?? selectedNeed.categoria}
+                    <Badge tono={PRIO_TONO[selectedNeed.prioridad]}>
+                      {selectedNeed.prioridad} {PRIO_LABEL[selectedNeed.prioridad]}
+                    </Badge>
+                    <span className="text-texto-suave">{selectedNeed.codigo}</span>
+                  </div>
+                  <p className="mt-1 text-sm text-texto line-clamp-3">{selectedNeed.descripcion}</p>
+                  <div className="mt-2 flex items-center gap-1 text-xs font-medium text-texto">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5 text-acento">
+                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {selectedNeed.zona || selectedNeed.ciudad}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="shrink-0 rounded-lg bg-acento/10 px-2 py-1 text-xs font-medium text-acento transition hover:bg-acento/20"
+                >
+                  Cerrar
+                </button>
               </div>
-              <button
-                onClick={() => setSelected(null)}
-                className="rounded-lg bg-acento/10 px-2 py-1 text-xs font-medium text-acento transition hover:bg-acento/20"
-              >
-                Ver todo
-              </button>
+              <div className="flex flex-wrap gap-2">
+                {selectedNeed.contactoCelular && selectedNeed.contactoCelular !== "0000000000" && (
+                  <a
+                    href={`https://wa.me/57${selectedNeed.contactoCelular}?text=${encodeURIComponent(`Hola, vi tu necesidad ${selectedNeed.codigo} en Collab x Mindo. ¿Cómo te podemos ayudar?`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-ok px-3 py-1.5 text-xs font-semibold text-superficie transition hover:opacity-90"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    💬 WhatsApp {selectedNeed.contactoNombre || "contacto"}
+                  </a>
+                )}
+                {selectedNeed.lat && selectedNeed.lng && (
+                  <a
+                    href={`https://www.google.com/maps?q=${selectedNeed.lat},${selectedNeed.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-acento px-3 py-1.5 text-xs font-semibold text-superficie transition hover:opacity-90"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    📍 Abrir en Google Maps
+                  </a>
+                )}
+              </div>
             </div>
           )}
           {!selectedNeed && conGeo.length > 0 && (
@@ -421,7 +459,7 @@ function NeedCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!compact && <span className="text-lg">{CAT_ICON[n.categoria] ?? "📋"}</span>}
             <span className={`${compact ? "text-xs" : "text-sm"} font-semibold`}>
               {compact ? n.zona || n.ciudad : CAT[n.categoria] ?? n.categoria}
@@ -438,7 +476,18 @@ function NeedCard({
             <p className="mt-1 text-xs font-medium text-acento">Cantidad: {n.cantidad}</p>
           )}
         </div>
-        {hasGeo && (
+        {n.contactoCelular && n.contactoCelular !== "0000000000" ? (
+          <a
+            href={`https://wa.me/57${n.contactoCelular}?text=${encodeURIComponent(`Hola, vi tu necesidad ${n.codigo} en Collab x Mindo. ¿Cómo te podemos ayudar?`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="shrink-0 rounded-lg bg-ok-suave p-2 text-ok transition hover:bg-ok hover:text-superficie"
+            title={`WhatsApp ${n.contactoNombre || "contacto"}`}
+          >
+            💬
+          </a>
+        ) : hasGeo ? (
           <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
             isSelected ? "bg-acento text-superficie" : "bg-acento-suave text-acento"
           }`}>
@@ -447,7 +496,7 @@ function NeedCard({
               <circle cx="12" cy="10" r="3" />
             </svg>
           </div>
-        )}
+        ) : null}
       </div>
       {!compact && (
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-texto-suave">
@@ -459,6 +508,7 @@ function NeedCard({
             {n.zona || n.ciudad}
             {hasGeo && <span className="text-ok"> (GPS)</span>}
           </span>
+          {n.contactoNombre && <span>👤 {n.contactoNombre}</span>}
           {n.personasAfectadas > 1 && <span>{n.personasAfectadas} personas</span>}
           {n.ninos > 0 && <span>👶 {n.ninos} niño{n.ninos !== 1 ? "s" : ""}</span>}
           {n.adultosMayores > 0 && <span>👴 {n.adultosMayores}</span>}

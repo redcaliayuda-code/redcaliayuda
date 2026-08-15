@@ -60,6 +60,9 @@ export default async function NecesidadesPublicas() {
             Collab x Mindo
           </Link>
           <div className="flex items-center gap-3">
+            <Link href="/coordinar" className="text-xs text-texto-suave hover:text-texto">
+              Coordinadores
+            </Link>
             <Link href="/quiero-ayudar" className="toque-activo rounded-lg bg-acento px-3 py-1.5 text-xs font-semibold text-superficie">
               Quiero ayudar
             </Link>

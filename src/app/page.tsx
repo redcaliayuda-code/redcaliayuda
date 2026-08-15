@@ -26,8 +26,8 @@ export default async function Landing() {
             <Link href="/personas" className="text-texto-suave hover:text-texto">
               Personas
             </Link>
-            <Link href="/panel" className="text-texto-suave hover:text-texto">
-              Panel
+            <Link href="/coordinar" className="text-texto-suave hover:text-texto">
+              Coordinadores
             </Link>
           </nav>
         </div>

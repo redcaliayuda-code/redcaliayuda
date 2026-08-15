@@ -113,6 +113,7 @@ function buildMapSrc(lat: number, lng: number, zoom: "close" | "overview", allPo
 
 export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidades: Necesidad[]; voluntarios?: Voluntario[] }) {
   const [filtro, setFiltro] = useState<string>("todas");
+  const [busqueda, setBusqueda] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const mapaRef = useRef<HTMLDivElement>(null);
 
@@ -123,9 +124,21 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
     }, {})
   ).sort((a, b) => b[1] - a[1]);
 
-  const filtradas = filtro === "todas"
-    ? necesidades
-    : necesidades.filter((n) => n.categoria === filtro);
+  const porBusqueda = busqueda.trim()
+    ? necesidades.filter((n) => {
+        const q = busqueda.toLowerCase();
+        return n.codigo.toLowerCase().includes(q) ||
+          n.zona.toLowerCase().includes(q) ||
+          n.descripcion.toLowerCase().includes(q) ||
+          n.ciudad.toLowerCase().includes(q);
+      })
+    : null;
+
+  const filtradas = porBusqueda
+    ? porBusqueda
+    : filtro === "todas"
+      ? necesidades
+      : necesidades.filter((n) => n.categoria === filtro);
 
   const conGeo = filtradas.filter((n) => n.lat != null && n.lng != null);
   const allPoints = conGeo.map((n) => ({ lat: n.lat!, lng: n.lng! }));
@@ -157,13 +170,39 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
       <h1 className="text-2xl font-bold tracking-tight">Necesidades activas</h1>
       <p className="mt-1 text-sm text-texto-suave">
         {necesidades.length} necesidad{necesidades.length !== 1 ? "es" : ""}
-        {p1Count > 0 && filtro === "todas" && (
+        {p1Count > 0 && filtro === "todas" && !porBusqueda && (
           <span className="ml-2 inline-flex items-center gap-1 text-alerta">
             <span className="pulso inline-block h-2 w-2 rounded-full bg-alerta" />
             {necesidades.filter((n) => n.prioridad === "P1").length} urgente{necesidades.filter((n) => n.prioridad === "P1").length !== 1 ? "s" : ""}
           </span>
         )}
       </p>
+
+      {/* Buscador por codigo */}
+      <div className="mt-3 relative">
+        <input
+          type="text"
+          placeholder="Buscar por codigo (ej. NEC-8WTN), zona o descripcion..."
+          value={busqueda}
+          onChange={(e) => { setBusqueda(e.target.value); setSelected(null); }}
+          className="w-full rounded-xl border border-borde bg-superficie px-4 py-3 pl-10 text-sm placeholder:text-texto-suave/50 focus:border-acento focus:outline-none"
+        />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="absolute left-3 top-3.5 h-4 w-4 text-texto-suave">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        {busqueda && (
+          <button onClick={() => setBusqueda("")} className="absolute right-3 top-3 rounded-full bg-superficie-elevada px-2 py-0.5 text-xs text-texto-suave hover:text-texto">
+            Limpiar
+          </button>
+        )}
+      </div>
+
+      {porBusqueda && (
+        <div className="mt-2 text-sm text-acento font-medium">
+          {porBusqueda.length} resultado{porBusqueda.length !== 1 ? "s" : ""} para &quot;{busqueda}&quot;
+        </div>
+      )}
 
       {/* Filtros por categoria */}
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2 -mx-4 px-4" style={{ scrollbarWidth: "none" }}>
@@ -230,8 +269,19 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
       {/* Necesidades agrupadas por categoria */}
       {filtradas.length === 0 ? (
         <div className="mt-10 rounded-xl border border-borde bg-superficie p-8 text-center">
-          <div className="text-3xl">✓</div>
-          <p className="mt-3 text-sm font-medium">No hay necesidades en esta categoria</p>
+          <div className="text-3xl">{porBusqueda ? "🔍" : "✓"}</div>
+          <p className="mt-3 text-sm font-medium">
+            {porBusqueda ? `No se encontro "${busqueda}"` : "No hay necesidades en esta categoria"}
+          </p>
+          {porBusqueda && (
+            <p className="mt-1 text-xs text-texto-suave">Verifica el codigo o intenta con otra palabra</p>
+          )}
+        </div>
+      ) : porBusqueda ? (
+        <div className="mt-4 space-y-3">
+          {filtradas.map((n) => (
+            <NeedCard key={n.id} n={n} selected={selected} onSelect={handleCardClick} />
+          ))}
         </div>
       ) : filtro !== "todas" ? (
         <div className="mt-4 space-y-3">

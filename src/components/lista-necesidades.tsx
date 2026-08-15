@@ -68,6 +68,20 @@ const PRIO_BORDER: Record<string, string> = {
   P1: "border-l-alerta", P2: "border-l-aviso", P3: "border-l-acento", P4: "border-l-ok",
 };
 
+const TIPO_LABEL: Record<string, string> = {
+  VOLUNTARIO: "Voluntario", ESPECIALISTA: "Especialista",
+  RECURSOS: "Recursos", LOGISTICA: "Logistica",
+};
+
+const TIPO_ICON: Record<string, string> = {
+  VOLUNTARIO: "🤝", ESPECIALISTA: "⚕️", RECURSOS: "📦", LOGISTICA: "🚛",
+};
+
+const VEHICULO_LABEL: Record<string, string> = {
+  NINGUNO: "", MOTO: "Moto", CARRO: "Carro", CAMIONETA: "Camioneta",
+  CAMION: "Camion", BICICLETA: "Bicicleta",
+};
+
 function formatFecha(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -97,27 +111,25 @@ function buildMapSrc(lat: number, lng: number, zoom: "close" | "overview", allPo
   return `https://www.openstreetmap.org/export/embed.html?bbox=-76.7%2C3.3%2C-75.4%2C5.1&layer=mapnik`;
 }
 
-const TIPO_LABEL: Record<string, string> = {
-  VOLUNTARIO: "Voluntario", ESPECIALISTA: "Especialista",
-  RECURSOS: "Recursos", LOGISTICA: "Logistica",
-};
-
-const TIPO_ICON: Record<string, string> = {
-  VOLUNTARIO: "🤝", ESPECIALISTA: "⚕️", RECURSOS: "📦", LOGISTICA: "🚛",
-};
-
-const VEHICULO_LABEL: Record<string, string> = {
-  NINGUNO: "", MOTO: "Moto", CARRO: "Carro", CAMIONETA: "Camioneta",
-  CAMION: "Camion", BICICLETA: "Bicicleta",
-};
-
 export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidades: Necesidad[]; voluntarios?: Voluntario[] }) {
-  const conGeo = necesidades.filter((n) => n.lat != null && n.lng != null);
-  const allPoints = conGeo.map((n) => ({ lat: n.lat!, lng: n.lng! }));
-  const p1Count = necesidades.filter((n) => n.prioridad === "P1").length;
-
+  const [filtro, setFiltro] = useState<string>("todas");
   const [selected, setSelected] = useState<string | null>(null);
   const mapaRef = useRef<HTMLDivElement>(null);
+
+  const categoriasConConteo = Object.entries(
+    necesidades.reduce<Record<string, number>>((acc, n) => {
+      acc[n.categoria] = (acc[n.categoria] || 0) + 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
+
+  const filtradas = filtro === "todas"
+    ? necesidades
+    : necesidades.filter((n) => n.categoria === filtro);
+
+  const conGeo = filtradas.filter((n) => n.lat != null && n.lng != null);
+  const allPoints = conGeo.map((n) => ({ lat: n.lat!, lng: n.lng! }));
+  const p1Count = filtradas.filter((n) => n.prioridad === "P1").length;
 
   const selectedNeed = selected ? conGeo.find((n) => n.id === selected) : null;
 
@@ -133,24 +145,58 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
     mapaRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
+  const grouped = filtro === "todas"
+    ? categoriasConConteo.map(([cat]) => ({
+        cat,
+        items: necesidades.filter((n) => n.categoria === cat),
+      }))
+    : [{ cat: filtro, items: filtradas }];
+
   return (
     <>
       <h1 className="text-2xl font-bold tracking-tight">Necesidades activas</h1>
       <p className="mt-1 text-sm text-texto-suave">
-        {necesidades.length} necesidad{necesidades.length !== 1 ? "es" : ""} reportada{necesidades.length !== 1 ? "s" : ""}
-        {p1Count > 0 && (
+        {necesidades.length} necesidad{necesidades.length !== 1 ? "es" : ""}
+        {p1Count > 0 && filtro === "todas" && (
           <span className="ml-2 inline-flex items-center gap-1 text-alerta">
             <span className="pulso inline-block h-2 w-2 rounded-full bg-alerta" />
-            {p1Count} urgente{p1Count !== 1 ? "s" : ""}
+            {necesidades.filter((n) => n.prioridad === "P1").length} urgente{necesidades.filter((n) => n.prioridad === "P1").length !== 1 ? "s" : ""}
           </span>
         )}
       </p>
+
+      {/* Filtros por categoria */}
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-2 -mx-4 px-4" style={{ scrollbarWidth: "none" }}>
+        <button
+          onClick={() => { setFiltro("todas"); setSelected(null); }}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+            filtro === "todas"
+              ? "bg-acento text-superficie"
+              : "border border-borde bg-superficie text-texto-suave hover:border-acento"
+          }`}
+        >
+          Todas ({necesidades.length})
+        </button>
+        {categoriasConConteo.map(([cat, count]) => (
+          <button
+            key={cat}
+            onClick={() => { setFiltro(cat); setSelected(null); }}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              filtro === cat
+                ? "bg-acento text-superficie"
+                : "border border-borde bg-superficie text-texto-suave hover:border-acento"
+            }`}
+          >
+            {CAT_ICON[cat] ?? "📋"} {CAT[cat] ?? cat} ({count})
+          </button>
+        ))}
+      </div>
 
       {/* Mapa interactivo */}
       {mapSrc && (
         <div ref={mapaRef} className="mt-4 overflow-hidden rounded-xl border-2 border-borde transition-colors duration-300" style={selectedNeed ? { borderColor: "var(--color-acento)" } : {}}>
           <iframe
-            key={selected ?? "overview"}
+            key={selected ?? `overview-${filtro}`}
             title={selectedNeed ? `Ubicación: ${selectedNeed.zona || selectedNeed.ciudad}` : "Mapa de necesidades"}
             src={mapSrc}
             className="h-56 w-full sm:h-72"
@@ -181,70 +227,44 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
         </div>
       )}
 
-      {/* Lista */}
-      {necesidades.length === 0 ? (
+      {/* Necesidades agrupadas por categoria */}
+      {filtradas.length === 0 ? (
         <div className="mt-10 rounded-xl border border-borde bg-superficie p-8 text-center">
           <div className="text-3xl">✓</div>
-          <p className="mt-3 text-sm font-medium">No hay necesidades activas</p>
-          <p className="mt-1 text-xs text-texto-suave">Todas las necesidades han sido atendidas.</p>
+          <p className="mt-3 text-sm font-medium">No hay necesidades en esta categoria</p>
+        </div>
+      ) : filtro !== "todas" ? (
+        <div className="mt-4 space-y-3">
+          {filtradas.map((n) => (
+            <NeedCard key={n.id} n={n} selected={selected} onSelect={handleCardClick} />
+          ))}
         </div>
       ) : (
-        <div className="mt-4 space-y-3 escalonar">
-          {necesidades.map((n) => {
-            const hasGeo = n.lat != null && n.lng != null;
-            const isSelected = n.id === selected;
-            return (
-              <article
-                key={n.id}
-                onClick={() => handleCardClick(n)}
-                className={`rounded-xl border border-borde border-l-4 ${PRIO_BORDER[n.prioridad]} bg-superficie p-4 transition ${
-                  hasGeo ? "cursor-pointer hover:border-acento hover:shadow-md" : ""
-                } ${isSelected ? "ring-2 ring-acento shadow-md" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{CAT_ICON[n.categoria] ?? "📋"}</span>
-                      <span className="text-sm font-semibold">{CAT[n.categoria] ?? n.categoria}</span>
-                      <Badge tono={PRIO_TONO[n.prioridad]}>
-                        {n.prioridad} {PRIO_LABEL[n.prioridad]}
-                      </Badge>
-                    </div>
-                    <p className="mt-1.5 text-sm text-texto-suave line-clamp-2">{n.descripcion}</p>
-                    {n.cantidad && (
-                      <p className="mt-1 text-xs font-medium text-acento">Cantidad: {n.cantidad}</p>
-                    )}
-                  </div>
-                  {hasGeo && (
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition ${
-                      isSelected ? "bg-acento text-superficie" : "bg-acento-suave text-acento"
-                    }`}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-texto-suave">
-                  <span className="flex items-center gap-1">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-                      <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    {n.zona || n.ciudad}
-                    {hasGeo && <span className="text-ok"> (GPS)</span>}
-                  </span>
-                  {n.personasAfectadas > 1 && (
-                    <span>{n.personasAfectadas} personas</span>
-                  )}
-                  {n.ninos > 0 && <span>👶 {n.ninos} niño{n.ninos !== 1 ? "s" : ""}</span>}
-                  {n.adultosMayores > 0 && <span>👴 {n.adultosMayores}</span>}
-                  <span>{formatFecha(n.createdAt)}</span>
-                </div>
-              </article>
-            );
-          })}
+        <div className="mt-4 space-y-6">
+          {grouped.map(({ cat, items }) => (
+            <section key={cat}>
+              <div className="sticky top-14 z-[5] flex items-center gap-2 bg-fondo/95 backdrop-blur-sm py-2">
+                <span className="text-lg">{CAT_ICON[cat] ?? "📋"}</span>
+                <h2 className="text-sm font-bold">{CAT[cat] ?? cat}</h2>
+                <span className="rounded-full bg-superficie-elevada px-2 py-0.5 text-xs font-bold text-texto-suave">
+                  {items.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {items.slice(0, 5).map((n) => (
+                  <NeedCard key={n.id} n={n} selected={selected} onSelect={handleCardClick} compact />
+                ))}
+                {items.length > 5 && (
+                  <button
+                    onClick={() => setFiltro(cat)}
+                    className="w-full rounded-lg border border-borde bg-superficie px-3 py-2 text-xs font-medium text-acento transition hover:border-acento"
+                  >
+                    Ver las {items.length} necesidades de {(CAT[cat] ?? cat).toLowerCase()}
+                  </button>
+                )}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 
@@ -326,5 +346,72 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
         </Link>
       </div>
     </>
+  );
+}
+
+function NeedCard({
+  n,
+  selected,
+  onSelect,
+  compact,
+}: {
+  n: Necesidad;
+  selected: string | null;
+  onSelect: (n: Necesidad) => void;
+  compact?: boolean;
+}) {
+  const hasGeo = n.lat != null && n.lng != null;
+  const isSelected = n.id === selected;
+  return (
+    <article
+      onClick={() => onSelect(n)}
+      className={`rounded-xl border border-borde border-l-4 ${PRIO_BORDER[n.prioridad]} bg-superficie ${compact ? "p-3" : "p-4"} transition ${
+        hasGeo ? "cursor-pointer hover:border-acento hover:shadow-md" : ""
+      } ${isSelected ? "ring-2 ring-acento shadow-md" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {!compact && <span className="text-lg">{CAT_ICON[n.categoria] ?? "📋"}</span>}
+            <span className={`${compact ? "text-xs" : "text-sm"} font-semibold`}>
+              {compact ? n.zona || n.ciudad : CAT[n.categoria] ?? n.categoria}
+            </span>
+            <Badge tono={PRIO_TONO[n.prioridad]}>
+              {n.prioridad} {PRIO_LABEL[n.prioridad]}
+            </Badge>
+          </div>
+          <p className={`mt-1 ${compact ? "text-xs" : "text-sm"} text-texto-suave line-clamp-2`}>{n.descripcion}</p>
+          {n.cantidad && !compact && (
+            <p className="mt-1 text-xs font-medium text-acento">Cantidad: {n.cantidad}</p>
+          )}
+        </div>
+        {hasGeo && (
+          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+            isSelected ? "bg-acento text-superficie" : "bg-acento-suave text-acento"
+          }`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+          </div>
+        )}
+      </div>
+      {!compact && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-texto-suave">
+          <span className="flex items-center gap-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {n.zona || n.ciudad}
+            {hasGeo && <span className="text-ok"> (GPS)</span>}
+          </span>
+          {n.personasAfectadas > 1 && <span>{n.personasAfectadas} personas</span>}
+          {n.ninos > 0 && <span>👶 {n.ninos} niño{n.ninos !== 1 ? "s" : ""}</span>}
+          {n.adultosMayores > 0 && <span>👴 {n.adultosMayores}</span>}
+          <span>{formatFecha(n.createdAt)}</span>
+        </div>
+      )}
+    </article>
   );
 }

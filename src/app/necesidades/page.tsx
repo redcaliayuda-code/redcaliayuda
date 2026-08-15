@@ -8,8 +8,8 @@ export default async function NecesidadesPublicas() {
   const [necesidades, voluntarios] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
-      orderBy: [{ prioridad: "asc" }, { updatedAt: "desc" }],
-      take: 200,
+      orderBy: [{ updatedAt: "desc" }],
+      take: 500,
     }),
     prisma.volunteer.findMany({
       where: { disponibilidad: { not: "INDEFINIDO" } },

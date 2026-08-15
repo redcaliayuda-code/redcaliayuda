@@ -32,6 +32,12 @@ type Vol = {
   lng: number | null;
   zona: string;
   disponibilidad: string;
+  especializacion: string;
+  recursosOfrecidos: string;
+  capacidadCarga: string;
+  verificado: boolean;
+  misionesCompletadas: number;
+  createdAt: string;
 };
 
 type Mission = {
@@ -450,28 +456,46 @@ export default function CoordinarPage() {
           <div className="mt-4 space-y-2" style={{ maxHeight: "70vh", overflowY: "auto" }}>
             {volunteers.map((v) => (
               <div key={v.id} className="rounded-xl border border-borde bg-superficie p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold">{v.nombre}</span>
-                      <span className="rounded-full bg-acento-suave px-2 py-0.5 text-xs text-acento">{v.tipoAyuda}</span>
-                      {v.vehiculo !== "NINGUNO" && (
-                        <span className="rounded-full bg-aviso-suave px-2 py-0.5 text-xs text-aviso">🚗 {v.vehiculo}</span>
+                      <span className="rounded-full bg-acento-suave px-2 py-0.5 text-xs font-semibold text-acento">{v.tipoAyuda}</span>
+                      {v.verificado && <span className="rounded-full bg-ok-suave px-2 py-0.5 text-xs font-semibold text-ok">Verificado</span>}
+                      {v.misionesCompletadas > 0 && (
+                        <span className="rounded-full bg-aviso-suave px-2 py-0.5 text-xs text-aviso">{v.misionesCompletadas} mision{v.misionesCompletadas !== 1 ? "es" : ""}</span>
                       )}
                     </div>
+                    {v.especializacion && (
+                      <div className="mt-1 text-xs font-medium text-acento">
+                        Especialidad: {v.especializacion}
+                      </div>
+                    )}
                     {v.descripcion && <p className="mt-0.5 text-xs text-texto-suave">{v.descripcion}</p>}
+                    {v.recursosOfrecidos && (
+                      <div className="mt-1 rounded-lg bg-ok-suave/40 px-2 py-1 text-xs text-ok">
+                        Ofrece: {v.recursosOfrecidos}
+                      </div>
+                    )}
+                    <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-texto-suave">
+                      <span>{v.zona || "Cali"}</span>
+                      <span>· {v.disponibilidad === "AHORA" ? "Disponible ahora" : v.disponibilidad === "HOY" ? "Hoy" : v.disponibilidad === "VARIOS_DIAS" ? "Varios dias" : v.disponibilidad}</span>
+                      {v.vehiculo !== "NINGUNO" && (
+                        <span className="text-aviso">· 🚗 {v.vehiculo}{v.capacidadCarga ? ` (${v.capacidadCarga})` : ""}</span>
+                      )}
+                      {v.lat && v.lng && <span className="text-ok">· GPS</span>}
+                    </div>
                     <div className="mt-1 text-xs text-texto-suave">
-                      {v.codigo} · {v.zona || "Cali"} · {v.disponibilidad}
-                      {v.lat && v.lng && <span className="text-ok"> (GPS)</span>}
+                      {v.codigo} · {v.createdAt ? formatFecha(v.createdAt) : ""}
                     </div>
                   </div>
                   <a
                     href={`https://wa.me/57${v.celular}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-lg bg-ok-suave p-2 text-lg text-ok transition hover:bg-ok hover:text-superficie"
+                    className="shrink-0 rounded-lg bg-ok-suave px-3 py-2 text-sm font-semibold text-ok transition hover:bg-ok hover:text-superficie"
                   >
-                    💬
+                    💬 WhatsApp
                   </a>
                 </div>
               </div>

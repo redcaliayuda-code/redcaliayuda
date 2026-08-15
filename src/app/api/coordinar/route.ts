@@ -93,6 +93,9 @@ export async function GET(req: NextRequest) {
         id: true, codigo: true, nombre: true, celular: true,
         tipoAyuda: true, descripcion: true, vehiculo: true,
         lat: true, lng: true, zona: true, disponibilidad: true,
+        especializacion: true, recursosOfrecidos: true,
+        capacidadCarga: true, verificado: true, misionesCompletadas: true,
+        createdAt: true,
       },
     }),
     prisma.mission.findMany({

@@ -150,11 +150,14 @@ export default function CoordinarPage() {
   const [demanda, setDemanda] = useState<Record<string, number>>({});
 
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null);
-  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "misiones" | "inventario">("necesidades");
+  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "misiones" | "inventario" | "zonas">("necesidades");
   const [invCenter, setInvCenter] = useState<string>("");
   const [invItems, setInvItems] = useState<{ categoria: string; nombre: string; cantidad: number; unidad: string; estado: string }[]>([]);
   const [invSaving, setInvSaving] = useState(false);
   const [filterPrio, setFilterPrio] = useState<string>("all");
+  const [filterZona, setFilterZona] = useState<string>("all");
+  const [filterEstado, setFilterEstado] = useState<string>("all");
+  const [filterGps, setFilterGps] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
 
@@ -284,17 +287,164 @@ export default function CoordinarPage() {
       .map((v) => ({ ...v, dist: null as number | null }));
   })();
 
+  const zonas = [...new Set(needs.map((n) => n.zona || n.ciudad).filter(Boolean))].sort();
+
   const filteredNeeds = needs.filter((n) => {
     if (filterPrio !== "all" && n.prioridad !== filterPrio) return false;
+    if (filterZona !== "all" && (n.zona || n.ciudad) !== filterZona) return false;
+    if (filterEstado === "verificado" && n.estadoVerificacion !== "VERIFICADO") return false;
+    if (filterEstado === "no_verificado" && n.estadoVerificacion !== "NO_VERIFICADO") return false;
+    if (filterEstado === "sin_asignar" && n.estadoResolucion !== "PENDIENTE") return false;
+    if (filterGps === "con_gps" && (!n.lat || !n.lng)) return false;
+    if (filterGps === "sin_gps" && (n.lat && n.lng)) return false;
     if (search) {
       const s = search.toLowerCase();
-      return n.descripcion.toLowerCase().includes(s) || n.zona.toLowerCase().includes(s) || n.codigo.toLowerCase().includes(s);
+      return n.descripcion.toLowerCase().includes(s) || n.zona.toLowerCase().includes(s) || n.codigo.toLowerCase().includes(s) || (n.contactoNombre || "").toLowerCase().includes(s);
     }
     return true;
   });
 
   const p1Count = needs.filter((n) => n.prioridad === "P1").length;
   const pendCount = needs.filter((n) => n.estadoResolucion === "PENDIENTE").length;
+
+  // --- Alertas en tiempo real ---
+  const alertas = (() => {
+    const now = Date.now();
+    const twoHours = 2 * 60 * 60 * 1000;
+    const items: { icon: string; msg: string; level: "alerta" | "aviso" | "acento" }[] = [];
+
+    const p1Pend = needs.filter((n) => n.prioridad === "P1" && n.estadoResolucion === "PENDIENTE");
+    if (p1Pend.length > 0) {
+      items.push({ icon: "🔴", msg: `${p1Pend.length} necesidad${p1Pend.length > 1 ? "es" : ""} P1 (VIDA) sin atender`, level: "alerta" });
+    }
+
+    const oldPend = needs.filter((n) => n.estadoResolucion === "PENDIENTE" && (now - new Date(n.createdAt).getTime()) > twoHours);
+    if (oldPend.length > 0) {
+      items.push({ icon: "⏰", msg: `${oldPend.length} necesidad${oldPend.length > 1 ? "es" : ""} pendiente${oldPend.length > 1 ? "s" : ""} hace mas de 2 horas`, level: "aviso" });
+    }
+
+    const zonaMap = new Map<string, { nCount: number; vCount: number }>();
+    for (const n of needs) {
+      const z = n.zona || n.ciudad;
+      const entry = zonaMap.get(z) || { nCount: 0, vCount: 0 };
+      entry.nCount++;
+      zonaMap.set(z, entry);
+    }
+    for (const v of volunteers) {
+      const z = v.zona || "Cali";
+      const entry = zonaMap.get(z) || { nCount: 0, vCount: 0 };
+      entry.vCount++;
+      zonaMap.set(z, entry);
+    }
+    for (const [zona, { nCount, vCount }] of zonaMap) {
+      if (nCount >= 5 && vCount === 0) {
+        items.push({ icon: "⚠️", msg: `${zona}: ${nCount} necesidades, 0 voluntarios`, level: "aviso" });
+      }
+    }
+
+    const sinGps = needs.filter((n) => n.prioridad === "P1" && !n.lat && !n.lng);
+    if (sinGps.length > 0) {
+      items.push({ icon: "📍", msg: `${sinGps.length} necesidad${sinGps.length > 1 ? "es" : ""} P1 sin ubicacion GPS`, level: "acento" });
+    }
+
+    return items;
+  })();
+
+  // --- Dashboard Zonas ---
+  const zonaDashboard = (() => {
+    const map = new Map<string, {
+      needs: number; p1: number; pendientes: number;
+      volunteers: number; centers: number;
+      categorias: Record<string, number>;
+    }>();
+    for (const n of needs) {
+      const z = n.zona || n.ciudad || "Sin zona";
+      const entry = map.get(z) || { needs: 0, p1: 0, pendientes: 0, volunteers: 0, centers: 0, categorias: {} };
+      entry.needs++;
+      if (n.prioridad === "P1") entry.p1++;
+      if (n.estadoResolucion === "PENDIENTE") entry.pendientes++;
+      entry.categorias[n.categoria] = (entry.categorias[n.categoria] || 0) + 1;
+      map.set(z, entry);
+    }
+    for (const v of volunteers) {
+      const z = v.zona || "Cali";
+      const entry = map.get(z) || { needs: 0, p1: 0, pendientes: 0, volunteers: 0, centers: 0, categorias: {} };
+      entry.volunteers++;
+      map.set(z, entry);
+    }
+    for (const c of centers) {
+      const z = c.zona || "Cali";
+      const entry = map.get(z) || { needs: 0, p1: 0, pendientes: 0, volunteers: 0, centers: 0, categorias: {} };
+      entry.centers++;
+      map.set(z, entry);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[1].p1 - a[1].p1 || b[1].needs - a[1].needs)
+      .map(([zona, data]) => ({ zona, ...data }));
+  })();
+
+  // --- CSV/Excel parser ---
+  function parseCSVToItems(text: string) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(/[,;\t]/).map((h) => h.trim().toLowerCase().replace(/^"|"$/g, ""));
+    const catIdx = headers.findIndex((h) => ["categoria", "categoría", "category", "tipo"].includes(h));
+    const nameIdx = headers.findIndex((h) => ["nombre", "detalle", "name", "item", "producto", "descripcion"].includes(h));
+    const qtyIdx = headers.findIndex((h) => ["cantidad", "qty", "quantity", "cant"].includes(h));
+    const unitIdx = headers.findIndex((h) => ["unidad", "unit", "medida"].includes(h));
+    const statusIdx = headers.findIndex((h) => ["estado", "status"].includes(h));
+
+    const CATS_MAP: Record<string, string> = {
+      agua: "AGUA", alimentos: "ALIMENTOS", comida: "ALIMENTOS",
+      medicamentos: "MEDICAMENTOS", medicina: "MEDICAMENTOS",
+      higiene: "HIGIENE", "pañales": "PANALES", panales: "PANALES",
+      cobijas: "COBIJAS", colchonetas: "COBIJAS",
+      carpas: "CARPAS", linternas: "LINTERNAS",
+      herramientas: "HERRAMIENTAS", ropa: "ROPA",
+      colchones: "COLCHONETAS", otro: "OTRO",
+    };
+
+    const result: { categoria: string; nombre: string; cantidad: number; unidad: string; estado: string }[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, ""));
+      if (cols.length < 2) continue;
+
+      const rawCat = catIdx >= 0 ? cols[catIdx] : "";
+      const nombre = nameIdx >= 0 ? cols[nameIdx] : cols[1] || "";
+      const cantidad = qtyIdx >= 0 ? parseInt(cols[qtyIdx]) || 0 : parseInt(cols[2]) || 0;
+      const unidad = unitIdx >= 0 ? cols[unitIdx] || "unidades" : "unidades";
+      const rawEstado = statusIdx >= 0 ? cols[statusIdx] : "";
+
+      const catKey = rawCat.toLowerCase();
+      const categoria = CATS_MAP[catKey] || INV_CATS.find((c) => c.key === rawCat.toUpperCase())?.key || "OTRO";
+      const estado = ["DISPONIBLE", "BAJO", "AGOTADO"].includes(rawEstado.toUpperCase()) ? rawEstado.toUpperCase() : "DISPONIBLE";
+
+      result.push({ categoria, nombre, cantidad, unidad, estado });
+    }
+    return result;
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const parsed = parseCSVToItems(text);
+      if (parsed.length > 0) {
+        setInvItems(parsed);
+        setActionMsg(`${parsed.length} items cargados del archivo`);
+        setTimeout(() => setActionMsg(""), 3000);
+      } else {
+        setActionMsg("Error: No se pudieron leer items del archivo. Formato: categoria,nombre,cantidad,unidad,estado");
+        setTimeout(() => setActionMsg(""), 5000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
 
   return (
     <main className="min-h-screen safe-bottom">
@@ -335,20 +485,40 @@ export default function CoordinarPage() {
           </div>
         </div>
 
+        {/* Alertas en tiempo real */}
+        {alertas.length > 0 && (
+          <div className="mt-3 space-y-1.5">
+            {alertas.map((a, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold ${
+                  a.level === "alerta" ? "bg-alerta-suave text-alerta" :
+                  a.level === "aviso" ? "bg-aviso-suave text-aviso" :
+                  "bg-acento-suave text-acento"
+                }`}
+              >
+                <span>{a.icon}</span>
+                <span>{a.msg}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="mt-4 flex gap-1 rounded-xl bg-superficie-elevada p-1">
-          {(["necesidades", "voluntarios", "misiones", "inventario"] as const).map((t) => (
+          {(["necesidades", "voluntarios", "zonas", "inventario", "misiones"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition ${
                 tab === t ? "bg-acento text-superficie" : "text-texto-suave hover:text-texto"
               }`}
             >
-              {t === "necesidades" ? `Necesidades (${needs.length})`
-                : t === "voluntarios" ? `Voluntarios (${volunteers.length})`
-                : t === "misiones" ? `Misiones (${missions.length})`
-                : `Inventario (${inventory.length})`}
+              {t === "necesidades" ? `Necesidades`
+                : t === "voluntarios" ? `Voluntarios`
+                : t === "zonas" ? `Zonas`
+                : t === "inventario" ? `Inventario`
+                : `Misiones`}
             </button>
           ))}
         </div>
@@ -356,24 +526,66 @@ export default function CoordinarPage() {
         {/* Tab: Necesidades */}
         {tab === "necesidades" && (
           <div className="mt-4">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Buscar zona, codigo..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 rounded-lg border border-borde bg-superficie px-3 py-2 text-sm"
-              />
-              <select
-                value={filterPrio}
-                onChange={(e) => setFilterPrio(e.target.value)}
-                className="rounded-lg border border-borde bg-superficie px-3 py-2 text-sm"
-              >
-                <option value="all">Todas</option>
-                <option value="P1">P1 Vida</option>
-                <option value="P2">P2 Supervivencia</option>
-                <option value="P3">P3 Recuperacion</option>
-              </select>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Buscar zona, codigo, contacto..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="flex-1 rounded-lg border border-borde bg-superficie px-3 py-2 text-sm"
+                />
+                <select
+                  value={filterPrio}
+                  onChange={(e) => setFilterPrio(e.target.value)}
+                  className="rounded-lg border border-borde bg-superficie px-2 py-2 text-xs"
+                >
+                  <option value="all">Prioridad</option>
+                  <option value="P1">P1 Vida</option>
+                  <option value="P2">P2 Supervivencia</option>
+                  <option value="P3">P3 Recuperacion</option>
+                </select>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <select
+                  value={filterZona}
+                  onChange={(e) => setFilterZona(e.target.value)}
+                  className="rounded-lg border border-borde bg-superficie px-2 py-1.5 text-xs"
+                >
+                  <option value="all">Todas las zonas</option>
+                  {zonas.map((z) => (
+                    <option key={z} value={z}>{z}</option>
+                  ))}
+                </select>
+                <select
+                  value={filterEstado}
+                  onChange={(e) => setFilterEstado(e.target.value)}
+                  className="rounded-lg border border-borde bg-superficie px-2 py-1.5 text-xs"
+                >
+                  <option value="all">Todo estado</option>
+                  <option value="sin_asignar">Sin asignar</option>
+                  <option value="verificado">Verificadas</option>
+                  <option value="no_verificado">No verificadas</option>
+                </select>
+                <select
+                  value={filterGps}
+                  onChange={(e) => setFilterGps(e.target.value)}
+                  className="rounded-lg border border-borde bg-superficie px-2 py-1.5 text-xs"
+                >
+                  <option value="all">GPS</option>
+                  <option value="con_gps">Con GPS</option>
+                  <option value="sin_gps">Sin GPS</option>
+                </select>
+                {(filterPrio !== "all" || filterZona !== "all" || filterEstado !== "all" || filterGps !== "all" || search) && (
+                  <button
+                    onClick={() => { setFilterPrio("all"); setFilterZona("all"); setFilterEstado("all"); setFilterGps("all"); setSearch(""); }}
+                    className="rounded-lg bg-alerta-suave px-2 py-1.5 text-xs font-semibold text-alerta"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+                <span className="ml-auto text-xs text-texto-suave py-1.5">{filteredNeeds.length} de {needs.length}</span>
+              </div>
             </div>
 
             <div className="mt-3 space-y-2" style={{ maxHeight: "60vh", overflowY: "auto" }}>
@@ -611,6 +823,78 @@ export default function CoordinarPage() {
           </div>
         )}
 
+        {/* Tab: Zonas */}
+        {tab === "zonas" && (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl border border-borde bg-superficie p-3">
+              <h3 className="text-sm font-bold">Estado por zonas</h3>
+              <p className="text-xs text-texto-suave">{zonaDashboard.length} zonas activas — ordenadas por prioridad</p>
+            </div>
+            {zonaDashboard.map((z) => {
+              const ratio = z.volunteers > 0 ? (z.needs / z.volunteers).toFixed(1) : "sin vol.";
+              const criticalLevel = z.p1 > 0 ? "border-alerta/50" : z.pendientes > z.needs * 0.7 ? "border-aviso/50" : "border-borde";
+              const topCats = Object.entries(z.categorias).sort((a, b) => b[1] - a[1]).slice(0, 3);
+              return (
+                <div key={z.zona} className={`rounded-xl border-2 ${criticalLevel} bg-superficie p-4`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-bold">{z.zona}</h4>
+                      <div className="mt-1 flex items-center gap-3 flex-wrap text-xs">
+                        <span className="font-semibold">
+                          <span className={z.p1 > 0 ? "text-alerta" : "text-texto"}>{z.needs}</span> necesidad{z.needs !== 1 ? "es" : ""}
+                        </span>
+                        {z.p1 > 0 && (
+                          <span className="rounded-full bg-alerta-suave px-2 py-0.5 text-xs font-bold text-alerta">
+                            {z.p1} P1
+                          </span>
+                        )}
+                        <span className="text-aviso font-semibold">{z.pendientes} pendiente{z.pendientes !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-lg font-bold ${z.volunteers > 0 ? "text-ok" : "text-alerta"}`}>{z.volunteers}</div>
+                      <div className="text-xs text-texto-suave">voluntario{z.volunteers !== 1 ? "s" : ""}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-superficie-elevada p-2 text-center">
+                      <div className="text-xs text-texto-suave">Ratio</div>
+                      <div className={`text-sm font-bold ${typeof ratio === "string" && ratio === "sin vol." ? "text-alerta" : parseFloat(ratio as string) > 5 ? "text-alerta" : parseFloat(ratio as string) > 2 ? "text-aviso" : "text-ok"}`}>
+                        {ratio}
+                      </div>
+                      <div className="text-xs text-texto-suave">nec/vol</div>
+                    </div>
+                    <div className="rounded-lg bg-superficie-elevada p-2 text-center">
+                      <div className="text-xs text-texto-suave">Centros</div>
+                      <div className={`text-sm font-bold ${z.centers > 0 ? "text-ok" : "text-texto-suave"}`}>{z.centers}</div>
+                      <div className="text-xs text-texto-suave">acopio</div>
+                    </div>
+                    <div className="rounded-lg bg-superficie-elevada p-2 text-center">
+                      <div className="text-xs text-texto-suave">Cobertura</div>
+                      <div className={`text-sm font-bold ${z.needs - z.pendientes > 0 ? "text-ok" : "text-aviso"}`}>
+                        {z.needs > 0 ? Math.round(((z.needs - z.pendientes) / z.needs) * 100) : 0}%
+                      </div>
+                      <div className="text-xs text-texto-suave">atendido</div>
+                    </div>
+                  </div>
+
+                  {topCats.length > 0 && (
+                    <div className="mt-2 flex items-center gap-1 flex-wrap">
+                      <span className="text-xs text-texto-suave">Top:</span>
+                      {topCats.map(([cat, count]) => (
+                        <span key={cat} className="rounded-full bg-superficie-elevada px-2 py-0.5 text-xs">
+                          {CAT[cat] || cat} ({count})
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Tab: Inventario */}
         {tab === "inventario" && (
           <div className="mt-4 space-y-4">
@@ -716,6 +1000,27 @@ export default function CoordinarPage() {
 
                   {invCenter && (
                     <>
+                      {/* Upload CSV/Excel */}
+                      <div className="mt-3 rounded-lg border-2 border-dashed border-acento/30 bg-acento-suave/20 p-3">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <label className="cursor-pointer rounded-lg bg-acento px-3 py-1.5 text-xs font-bold text-superficie transition hover:opacity-90">
+                            Subir archivo CSV
+                            <input
+                              type="file"
+                              accept=".csv,.tsv,.txt"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                          <span className="text-xs text-texto-suave">
+                            Formato: categoria, nombre, cantidad, unidad, estado
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-xs text-texto-suave">
+                          Desde Excel: Archivo &rarr; Guardar como &rarr; CSV. Columnas: categoria, nombre, cantidad, unidad, estado
+                        </p>
+                      </div>
+
                       <div className="mt-3 space-y-2">
                         {invItems.map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2 rounded-lg border border-borde p-2">

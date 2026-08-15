@@ -4,7 +4,7 @@ export default function PrivacidadPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-8">
       <Link href="/" className="text-sm text-texto-suave hover:text-texto">
-        ← HumansCol
+        ← Collab x Mindo
       </Link>
 
       <h1 className="mt-4 text-2xl font-bold tracking-tight">
@@ -18,7 +18,7 @@ export default function PrivacidadPage() {
         <section>
           <h2 className="text-base font-bold text-texto">Quienes somos</h2>
           <p className="mt-2">
-            HumansCol es una plataforma ciudadana sin animo de lucro creada para coordinar
+            Collab x Mindo es una plataforma ciudadana sin animo de lucro creada para coordinar
             ayuda humanitaria durante la emergencia por el terremoto del 10 de agosto de 2026
             en Colombia. No somos una empresa ni una ONG registrada — somos ciudadanos
             organizandose para ayudar.
@@ -104,7 +104,7 @@ export default function PrivacidadPage() {
           </ul>
           <p className="mt-2">
             Para ejercer cualquiera de estos derechos, escribe por WhatsApp al numero
-            de coordinacion de HumansCol o al correo de contacto indicado en la plataforma.
+            de coordinacion de Collab x Mindo o al correo de contacto indicado en la plataforma.
           </p>
         </section>
 

@@ -147,14 +147,14 @@ export default function CoordinarPage() {
       <main className="min-h-screen safe-bottom">
         <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
           <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
-            <Link href="/" className="text-sm font-bold tracking-tight text-acento">HumansCol</Link>
+            <Link href="/" className="text-sm font-bold tracking-tight text-acento">Collab x Mindo</Link>
           </div>
         </header>
         <div className="mx-auto max-w-md px-4 py-16 text-center">
           <div className="text-4xl">🎯</div>
           <h1 className="mt-4 text-2xl font-bold">Panel de coordinacion</h1>
           <p className="mt-2 text-sm text-texto-suave">
-            Acceso exclusivo para coordinadores de HumansCol.
+            Acceso exclusivo para coordinadores de Collab x Mindo.
           </p>
           <div className="mt-6">
             <input
@@ -204,7 +204,7 @@ export default function CoordinarPage() {
     <main className="min-h-screen safe-bottom">
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <Link href="/" className="text-sm font-bold tracking-tight text-acento">HumansCol</Link>
+          <Link href="/" className="text-sm font-bold tracking-tight text-acento">Collab x Mindo</Link>
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-ok-suave px-2 py-0.5 text-xs font-bold text-ok">Coordinador</span>
             <Link href="/panel" className="text-xs text-texto-suave hover:text-texto">Panel</Link>
@@ -376,7 +376,7 @@ export default function CoordinarPage() {
                                       Asignar
                                     </button>
                                     <a
-                                      href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinadora de HumansCol. Hay una necesidad cerca de ti (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar? Maps: https://www.google.com/maps?q=${n.lat},${n.lng}`)}`}
+                                      href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinadora de Collab x Mindo. Hay una necesidad cerca de ti (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar? Maps: https://www.google.com/maps?q=${n.lat},${n.lng}`)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => e.stopPropagation()}

@@ -9,7 +9,7 @@ export default function GraciasPage() {
         <h1 className="mt-4 text-2xl font-semibold">Gracias por querer ayudar</h1>
         <p className="mt-3 text-texto-suave">
           Tu registro quedó guardado. Te contactaremos cuando haya una misión compatible
-          con lo que puedes ofrecer. Mientras tanto, comparte HumansCol con más personas
+          con lo que puedes ofrecer. Mientras tanto, comparte Collab x Mindo con más personas
           que quieran ayudar.
         </p>
         <div className="mt-6 flex justify-center gap-3">

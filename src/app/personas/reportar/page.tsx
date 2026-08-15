@@ -7,7 +7,7 @@ export default function ReportarPersonaPage() {
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link href="/personas" className="text-sm font-bold tracking-tight text-acento">
-            HumansCol
+            Collab x Mindo
           </Link>
           <Link href="/personas" className="text-xs text-texto-suave hover:text-texto">
             Ver tablero

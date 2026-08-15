@@ -83,7 +83,7 @@ export default async function GraciasVoluntarioPage({ params }: { params: Promis
   };
 
   const shareText = voluntario
-    ? `Nuevo voluntario en HumansCol:\n` +
+    ? `Nuevo voluntario en Collab x Mindo:\n` +
       `🤝 ${voluntario.nombre} — ${tipoLabel[voluntario.tipoAyuda] ?? voluntario.tipoAyuda}\n` +
       (voluntario.descripcion ? `📋 ${voluntario.descripcion}\n` : "") +
       (voluntario.vehiculo !== "NINGUNO" ? `🚗 Vehiculo: ${voluntario.vehiculo}\n` : "") +
@@ -195,7 +195,7 @@ export default async function GraciasVoluntarioPage({ params }: { params: Promis
               const icon = CAT_ICON[n.categoria] ?? "📋";
 
               const msg =
-                `Hola, soy ${voluntario!.nombre} y estoy registrado como voluntario en HumansCol.\n\n` +
+                `Hola, soy ${voluntario!.nombre} y estoy registrado como voluntario en Collab x Mindo.\n\n` +
                 `Vi que necesitan ayuda cerca de mi:\n` +
                 `${icon} ${catLabel}${n.cantidad ? ` — ${n.cantidad}` : ""}\n` +
                 `📍 ${n.direccion}, ${n.zona || n.ciudad}\n` +

@@ -59,7 +59,7 @@ export default async function GraciasPage({ params }: { params: Promise<{ codigo
       `👥 ${necesidad.personasAfectadas} persona${necesidad.personasAfectadas !== 1 ? "s" : ""}\n` +
       `⚡ Prioridad: ${necesidad.prioridad}\n` +
       (necesidad.lat && necesidad.lng ? `🗺️ https://www.google.com/maps?q=${necesidad.lat},${necesidad.lng}\n` : "") +
-      `\nSi puedes ayudar, entra a HumansCol: https://redcaliayuda.vercel.app/cerca`
+      `\nSi puedes ayudar, entra a Collab x Mindo: https://redcaliayuda.vercel.app/cerca`
     : "";
 
   return (
@@ -148,7 +148,7 @@ export default async function GraciasPage({ params }: { params: Promise<{ codigo
                 : `${(v.distancia / 1000).toFixed(1)}km`;
 
               const msg =
-                `Hola ${v.nombre}, hay una nueva necesidad cerca de ti en HumansCol:\n\n` +
+                `Hola ${v.nombre}, hay una nueva necesidad cerca de ti en Collab x Mindo:\n\n` +
                 `📋 ${catLabel}${necesidad!.cantidad ? ` — ${necesidad!.cantidad}` : ""}\n` +
                 `📍 ${necesidad!.direccion}, ${necesidad!.zona || necesidad!.ciudad}\n` +
                 `👥 ${necesidad!.personasAfectadas} persona${necesidad!.personasAfectadas !== 1 ? "s" : ""}\n` +

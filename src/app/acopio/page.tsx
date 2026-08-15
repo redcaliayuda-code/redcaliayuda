@@ -30,7 +30,7 @@ export default async function AcopioPage() {
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-sm font-bold tracking-tight text-acento">
-            HumansCol
+            Collab x Mindo
           </Link>
           <nav className="flex items-center gap-3 text-xs">
             <Link href="/necesidades" className="text-texto-suave hover:text-texto">Necesidades</Link>
@@ -161,7 +161,7 @@ export default async function AcopioPage() {
                   </a>
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(
-                      `Punto de acopio HumansCol:\n📦 ${c.nombre}\n📍 ${c.direccion}, ${c.ciudad}\n` +
+                      `Punto de acopio Collab x Mindo:\n📦 ${c.nombre}\n📍 ${c.direccion}, ${c.ciudad}\n` +
                       (c.horario ? `🕐 ${c.horario}\n` : "") +
                       (c.necesitan ? `✅ Necesitan: ${c.necesitan}\n` : "") +
                       (c.lat && c.lng ? `🗺️ https://www.google.com/maps?q=${c.lat},${c.lng}\n` : "") +

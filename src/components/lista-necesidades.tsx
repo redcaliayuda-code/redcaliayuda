@@ -272,7 +272,7 @@ export function ListaNecesidades({ necesidades, voluntarios = [] }: { necesidade
                 <a
                   key={v.id}
                   href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(
-                    `Hola ${v.nombre}, vi que estas registrado como voluntario en HumansCol. Necesitamos tu ayuda. Puedes coordinar?`
+                    `Hola ${v.nombre}, vi que estas registrado como voluntario en Collab x Mindo. Necesitamos tu ayuda. Puedes coordinar?`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

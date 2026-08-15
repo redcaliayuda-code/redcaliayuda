@@ -56,7 +56,8 @@ export default async function NecesidadesPublicas() {
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-sm font-bold tracking-tight text-acento">
-            HumansCol
+            <img src="/mindo-logo.svg" alt="Mindo" className="inline h-5 w-5 mr-1" />
+            Collab x Mindo
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/quiero-ayudar" className="toque-activo rounded-lg bg-acento px-3 py-1.5 text-xs font-semibold text-superficie">

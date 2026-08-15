@@ -7,7 +7,7 @@ export default function PanelLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-10 border-b border-borde bg-superficie/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link href="/panel" className="text-sm font-bold text-acento">
-            HumansCol — Panel
+            Collab x Mindo — Panel
           </Link>
           <nav className="flex gap-2 text-xs sm:gap-4 sm:text-sm overflow-x-auto">
             <Link href="/panel" className="whitespace-nowrap text-texto-suave hover:text-texto">Resumen</Link>

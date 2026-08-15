@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
   const [needs, volunteers, missions] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
-      orderBy: [{ updatedAt: "desc" }],
+      orderBy: [{ createdAt: "desc" }],
       take: 1000,
       select: {
         id: true, codigo: true, categoria: true, prioridad: true,

@@ -194,13 +194,35 @@ export default function CoordinarPage() {
   }
 
   const selected = needs.find((n) => n.id === selectedNeed);
-  const nearbyVols = selected?.lat && selected?.lng
-    ? volunteers
+  const hasGeo = selected?.lat != null && selected?.lng != null;
+
+  const CAT_TO_AYUDA: Record<string, string[]> = {
+    AGUA: ["RECURSOS", "LOGISTICA"], ALIMENTOS: ["RECURSOS", "LOGISTICA"],
+    MEDICAMENTOS: ["ESPECIALISTA", "RECURSOS"], HIGIENE: ["RECURSOS"],
+    REFUGIO: ["LOGISTICA", "VOLUNTARIO"], HERRAMIENTAS: ["RECURSOS", "LOGISTICA"],
+    ATENCION_MEDICA: ["ESPECIALISTA"], ATENCION_PSICOLOGICA: ["ESPECIALISTA"],
+    EVACUACION: ["LOGISTICA", "VOLUNTARIO"], TRANSPORTE: ["LOGISTICA"],
+  };
+
+  const matchingVols = (() => {
+    if (!selected) return [];
+    if (hasGeo) {
+      return volunteers
         .filter((v) => v.lat && v.lng)
-        .map((v) => ({ ...v, dist: haversine(selected.lat!, selected.lng!, v.lat!, v.lng!) }))
-        .filter((v) => v.dist <= 15000)
-        .sort((a, b) => a.dist - b.dist)
-    : [];
+        .map((v) => ({ ...v, dist: haversine(selected.lat!, selected.lng!, v.lat!, v.lng!) as number | null }))
+        .filter((v) => v.dist! <= 20000)
+        .sort((a, b) => a.dist! - b.dist!)
+        .slice(0, 5);
+    }
+    const tipos = CAT_TO_AYUDA[selected.categoria] || [];
+    const byZone = volunteers.filter((v) =>
+      (v.zona && selected.zona && v.zona.toLowerCase() === selected.zona.toLowerCase()) ||
+      (tipos.length > 0 && tipos.includes(v.tipoAyuda))
+    );
+    return (byZone.length > 0 ? byZone : volunteers)
+      .slice(0, 5)
+      .map((v) => ({ ...v, dist: null as number | null }));
+  })();
 
   const filteredNeeds = needs.filter((n) => {
     if (filterPrio !== "all" && n.prioridad !== filterPrio) return false;
@@ -376,20 +398,23 @@ export default function CoordinarPage() {
                           )}
                         </div>
 
-                        {nearbyVols.length > 0 && (
-                          <div className="rounded-lg border border-ok/30 bg-ok-suave/30 p-3">
-                            <div className="text-xs font-bold text-ok">
-                              {nearbyVols.length} voluntario{nearbyVols.length !== 1 ? "s" : ""} cerca
+                        {matchingVols.length > 0 && (
+                          <div className={`rounded-lg border p-3 ${hasGeo ? "border-ok/30 bg-ok-suave/30" : "border-acento/30 bg-acento-suave/30"}`}>
+                            <div className={`text-xs font-bold ${hasGeo ? "text-ok" : "text-acento"}`}>
+                              {hasGeo
+                                ? `${matchingVols.length} voluntario${matchingVols.length !== 1 ? "s" : ""} cerca`
+                                : `${matchingVols.length} voluntario${matchingVols.length !== 1 ? "s" : ""} recomendados`}
                             </div>
                             <div className="mt-2 space-y-1">
-                              {nearbyVols.slice(0, 5).map((v) => (
+                              {matchingVols.map((v) => (
                                 <div key={v.id} className="flex items-center justify-between gap-2 rounded-lg bg-superficie p-2">
                                   <div className="min-w-0">
                                     <span className="text-xs font-medium">{v.nombre}</span>
                                     <span className="ml-1 text-xs text-texto-suave">{v.vehiculo !== "NINGUNO" ? `🚗 ${v.vehiculo}` : ""}</span>
+                                    <span className="ml-1 text-xs text-texto-suave">· {v.zona || v.tipoAyuda}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-acento">{distLabel(v.dist)}</span>
+                                    {v.dist != null && <span className="text-xs font-bold text-acento">{distLabel(v.dist)}</span>}
                                     <button
                                       onClick={(e) => { e.stopPropagation(); doAction("crear-mision", { needId: n.id, volunteerId: v.id }); }}
                                       className="rounded-lg bg-acento px-2 py-1 text-xs font-bold text-superficie"
@@ -397,7 +422,7 @@ export default function CoordinarPage() {
                                       Asignar
                                     </button>
                                     <a
-                                      href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinadora de Collab x Mindo. Hay una necesidad cerca de ti (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar? Maps: https://www.google.com/maps?q=${n.lat},${n.lng}`)}`}
+                                      href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinador(a) de Collab x Mindo. Hay una necesidad en ${n.zona || n.ciudad} (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar?${n.lat && n.lng ? ` Maps: https://www.google.com/maps?q=${n.lat},${n.lng}` : ""}`)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       onClick={(e) => e.stopPropagation()}

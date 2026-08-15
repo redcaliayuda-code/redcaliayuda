@@ -84,6 +84,7 @@ export function CercaMapa({ necesidades }: { necesidades: Necesidad[] }) {
   const [detectando, setDetectando] = useState(false);
   const [error, setError] = useState("");
   const [precision, setPrecision] = useState<number | null>(null);
+  const [filtroCat, setFiltroCat] = useState<string>("all");
 
   const detectar = useCallback(() => {
     if (!navigator.geolocation) {
@@ -113,11 +114,15 @@ export function CercaMapa({ necesidades }: { necesidades: Necesidad[] }) {
 
   const ubicado = miLat != null && miLng != null;
 
+  const filtradas = filtroCat === "all" ? necesidades : necesidades.filter((n) => n.categoria === filtroCat);
+
   const ordenadas = ubicado
-    ? necesidades
+    ? filtradas
         .map((n) => ({ ...n, distancia: haversine(miLat, miLng, n.lat, n.lng) }))
         .sort((a, b) => a.distancia - b.distancia)
-    : necesidades.map((n) => ({ ...n, distancia: null as number | null }));
+    : filtradas.map((n) => ({ ...n, distancia: null as number | null }));
+
+  const categoriasDisponibles = [...new Set(necesidades.map((n) => n.categoria))].sort();
 
   return (
     <main className="min-h-screen safe-bottom">
@@ -183,6 +188,32 @@ export function CercaMapa({ necesidades }: { necesidades: Necesidad[] }) {
           </div>
         )}
 
+        {/* Filtro por categoria */}
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setFiltroCat("all")}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              filtroCat === "all" ? "bg-acento text-superficie" : "bg-superficie-elevada text-texto-suave hover:text-texto"
+            }`}
+          >
+            Todas ({necesidades.length})
+          </button>
+          {categoriasDisponibles.map((cat) => {
+            const count = necesidades.filter((n) => n.categoria === cat).length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setFiltroCat(filtroCat === cat ? "all" : cat)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  filtroCat === cat ? "bg-acento text-superficie" : "bg-superficie-elevada text-texto-suave hover:text-texto"
+                }`}
+              >
+                {CAT_ICON[cat] || "📋"} {CAT_NOMBRE[cat] || cat} ({count})
+              </button>
+            );
+          })}
+        </div>
+
         {/* Mapa si hay ubicacion */}
         {ubicado && (
           <div className="mt-4 overflow-hidden rounded-xl border border-borde">
@@ -212,7 +243,7 @@ export function CercaMapa({ necesidades }: { necesidades: Necesidad[] }) {
             </div>
             <div className="rounded-xl bg-acento-suave p-3 text-center">
               <div className="text-xl font-bold text-acento">{ordenadas.length}</div>
-              <div className="text-xs text-texto-suave">Total</div>
+              <div className="text-xs text-texto-suave">{filtroCat !== "all" ? CAT_NOMBRE[filtroCat] : "Total"}</div>
             </div>
           </div>
         )}

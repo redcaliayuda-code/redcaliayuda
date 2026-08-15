@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Badge } from "@/components/ui";
+import { MapaLazy } from "./mapa-lazy";
 
 export const revalidate = 60;
 
@@ -175,16 +176,13 @@ export default async function AcopioPage() {
                   </a>
                 </div>
 
-                {/* Mapa individual */}
+                {/* Mapa individual - carga al tocar */}
                 {c.lat && c.lng && (
-                  <div className="mt-4 overflow-hidden rounded-lg border border-borde">
-                    <iframe
-                      title={`Mapa ${c.nombre}`}
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${c.lng - 0.004}%2C${c.lat - 0.003}%2C${c.lng + 0.004}%2C${c.lat + 0.003}&layer=mapnik&marker=${c.lat}%2C${c.lng}`}
-                      className="h-40 w-full"
-                      style={{ border: "none" }}
-                    />
-                  </div>
+                  <MapaLazy
+                    nombre={c.nombre}
+                    lat={c.lat}
+                    lng={c.lng}
+                  />
                 )}
               </article>
             ))}

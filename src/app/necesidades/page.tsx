@@ -32,7 +32,7 @@ export default async function NecesidadesPublicas() {
     ciudad: n.ciudad,
     lat: n.lat,
     lng: n.lng,
-    createdAt: n.updatedAt.toISOString(),
+    createdAt: n.createdAt.toISOString(),
   }));
 
   const volSerialized = voluntarios.map((v) => ({

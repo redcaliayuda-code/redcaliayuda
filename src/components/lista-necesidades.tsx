@@ -431,6 +431,9 @@ function NeedCard({
             </Badge>
           </div>
           <p className={`mt-1 ${compact ? "text-xs" : "text-sm"} text-texto-suave line-clamp-2`}>{n.descripcion}</p>
+          {compact && (
+            <div className="mt-1 text-xs text-texto-suave">{formatFecha(n.createdAt)}</div>
+          )}
           {n.cantidad && !compact && (
             <p className="mt-1 text-xs font-medium text-acento">Cantidad: {n.cantidad}</p>
           )}

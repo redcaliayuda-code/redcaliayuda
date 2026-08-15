@@ -74,6 +74,20 @@ function distLabel(m: number) {
   return m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`;
 }
 
+function formatFecha(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "ahora";
+  if (diffMin < 60) return `hace ${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `hace ${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `hace ${diffD}d`;
+  return d.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+}
+
 export default function CoordinarPage() {
   const [code, setCode] = useState("");
   const [authed, setAuthed] = useState(false);
@@ -304,7 +318,7 @@ export default function CoordinarPage() {
                         </div>
                         <p className="mt-1 text-sm text-texto-suave line-clamp-2">{n.descripcion}</p>
                         <div className="mt-1 text-xs text-texto-suave">
-                          {n.zona} · {ESTADO_LABEL[n.estadoResolucion]}
+                          {n.zona} · {ESTADO_LABEL[n.estadoResolucion]} · {formatFecha(n.createdAt)}
                         </div>
                       </div>
                       {n.contactoCelular && n.contactoCelular !== "0000000000" && (

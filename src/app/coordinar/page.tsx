@@ -49,6 +49,20 @@ type Mission = {
   volunteer: { nombre: string } | null;
 };
 
+type Center = { id: string; nombre: string; direccion: string; zona: string };
+
+type InvItem = {
+  id: string;
+  centerId: string;
+  categoria: string;
+  nombre: string;
+  cantidad: number;
+  unidad: string;
+  estado: string;
+  notas: string;
+  center: { nombre: string };
+};
+
 const CAT: Record<string, string> = {
   AGUA: "Agua", ALIMENTOS: "Alimentos", MEDICAMENTOS: "Medicamentos",
   HIGIENE: "Higiene", REFUGIO: "Refugio", HERRAMIENTAS: "Herramientas",
@@ -72,6 +86,27 @@ const PRIO: Record<string, { label: string; color: string }> = {
 
 const ESTADO_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente", EN_PROCESO: "En proceso", RESUELTO: "Resuelto", CERRADO: "Cerrado",
+};
+
+const INV_CATS = [
+  { key: "AGUA", label: "Agua", icon: "💧" },
+  { key: "ALIMENTOS", label: "Alimentos", icon: "🍚" },
+  { key: "MEDICAMENTOS", label: "Medicamentos", icon: "💊" },
+  { key: "HIGIENE", label: "Higiene", icon: "🧴" },
+  { key: "PANALES", label: "Pañales", icon: "👶" },
+  { key: "COBIJAS", label: "Cobijas/Colchonetas", icon: "🛏️" },
+  { key: "CARPAS", label: "Carpas", icon: "⛺" },
+  { key: "LINTERNAS", label: "Linternas", icon: "🔦" },
+  { key: "HERRAMIENTAS", label: "Herramientas", icon: "🔧" },
+  { key: "ROPA", label: "Ropa", icon: "👕" },
+  { key: "COLCHONETAS", label: "Colchonetas", icon: "🛌" },
+  { key: "OTRO", label: "Otro", icon: "📦" },
+];
+
+const ESTADO_INV: Record<string, { label: string; bg: string; text: string }> = {
+  DISPONIBLE: { label: "Disponible", bg: "bg-ok-suave", text: "text-ok" },
+  BAJO: { label: "Bajo", bg: "bg-aviso-suave", text: "text-aviso" },
+  AGOTADO: { label: "Agotado", bg: "bg-alerta-suave", text: "text-alerta" },
 };
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -110,9 +145,15 @@ export default function CoordinarPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
   const [volunteers, setVolunteers] = useState<Vol[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [inventory, setInventory] = useState<InvItem[]>([]);
+  const [demanda, setDemanda] = useState<Record<string, number>>({});
 
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null);
-  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "misiones">("necesidades");
+  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "misiones" | "inventario">("necesidades");
+  const [invCenter, setInvCenter] = useState<string>("");
+  const [invItems, setInvItems] = useState<{ categoria: string; nombre: string; cantidad: number; unidad: string; estado: string }[]>([]);
+  const [invSaving, setInvSaving] = useState(false);
   const [filterPrio, setFilterPrio] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [actionMsg, setActionMsg] = useState("");
@@ -126,6 +167,9 @@ export default function CoordinarPage() {
     setNeeds(data.needs);
     setVolunteers(data.volunteers);
     setMissions(data.missions);
+    setCenters(data.centers || []);
+    setInventory(data.inventory || []);
+    setDemanda(data.demanda || {});
   }, [code]);
 
   async function handleLogin() {
@@ -140,6 +184,9 @@ export default function CoordinarPage() {
       setNeeds(data.needs);
       setVolunteers(data.volunteers);
       setMissions(data.missions);
+      setCenters(data.centers || []);
+      setInventory(data.inventory || []);
+      setDemanda(data.demanda || {});
     } else {
       setError("Codigo incorrecto");
     }
@@ -152,7 +199,7 @@ export default function CoordinarPage() {
     return () => clearInterval(interval);
   }, [authed, fetchData]);
 
-  async function doAction(accion: string, payload: Record<string, string>) {
+  async function doAction(accion: string, payload: Record<string, any>) {
     setActionMsg("");
     const res = await fetch("/api/coordinar", {
       method: "POST",
@@ -290,7 +337,7 @@ export default function CoordinarPage() {
 
         {/* Tabs */}
         <div className="mt-4 flex gap-1 rounded-xl bg-superficie-elevada p-1">
-          {(["necesidades", "voluntarios", "misiones"] as const).map((t) => (
+          {(["necesidades", "voluntarios", "misiones", "inventario"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -298,7 +345,10 @@ export default function CoordinarPage() {
                 tab === t ? "bg-acento text-superficie" : "text-texto-suave hover:text-texto"
               }`}
             >
-              {t === "necesidades" ? `Necesidades (${needs.length})` : t === "voluntarios" ? `Voluntarios (${volunteers.length})` : `Misiones (${missions.length})`}
+              {t === "necesidades" ? `Necesidades (${needs.length})`
+                : t === "voluntarios" ? `Voluntarios (${volunteers.length})`
+                : t === "misiones" ? `Misiones (${missions.length})`
+                : `Inventario (${inventory.length})`}
             </button>
           ))}
         </div>
@@ -558,6 +608,207 @@ export default function CoordinarPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab: Inventario */}
+        {tab === "inventario" && (
+          <div className="mt-4 space-y-4">
+            {/* Dashboard de demanda */}
+            <div className="rounded-xl border border-borde bg-superficie p-4">
+              <h3 className="text-sm font-bold">Lo que mas se pide</h3>
+              <p className="text-xs text-texto-suave">Basado en {needs.length} necesidades activas</p>
+              <div className="mt-3 space-y-1.5">
+                {Object.entries(demanda)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 10)
+                  .map(([cat, count]) => {
+                    const inv = INV_CATS.find((c) => c.key === cat);
+                    const maxCount = Math.max(...Object.values(demanda));
+                    const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                    const invTotal = inventory
+                      .filter((i) => i.categoria === cat)
+                      .reduce((s, i) => s + i.cantidad, 0);
+                    return (
+                      <div key={cat} className="flex items-center gap-2">
+                        <span className="w-5 text-center text-sm">{inv?.icon || "📋"}</span>
+                        <span className="w-24 text-xs font-medium truncate">{inv?.label || cat}</span>
+                        <div className="flex-1 h-5 rounded-full bg-superficie-elevada overflow-hidden relative">
+                          <div
+                            className="h-full rounded-full bg-alerta/70 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">
+                            {count} pedidos
+                          </span>
+                        </div>
+                        <div className={`w-20 text-right text-xs font-bold ${invTotal > 0 ? "text-ok" : "text-alerta"}`}>
+                          {invTotal > 0 ? `${invTotal} disp.` : "Sin stock"}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Inventario actual */}
+            <div className="rounded-xl border border-borde bg-superficie p-4">
+              <h3 className="text-sm font-bold">Inventario centros de acopio</h3>
+              {inventory.length === 0 ? (
+                <p className="mt-2 text-xs text-texto-suave">No hay items registrados. Agrega inventario abajo.</p>
+              ) : (
+                <div className="mt-3 space-y-1">
+                  {inventory.map((item) => {
+                    const ei = ESTADO_INV[item.estado] || ESTADO_INV.DISPONIBLE;
+                    const inv = INV_CATS.find((c) => c.key === item.categoria);
+                    return (
+                      <div key={item.id} className="flex items-center gap-2 rounded-lg border border-borde p-2">
+                        <span className="text-sm">{inv?.icon || "📦"}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-medium">{inv?.label || item.categoria}</span>
+                          {item.nombre && <span className="ml-1 text-xs text-texto-suave">· {item.nombre}</span>}
+                        </div>
+                        <span className="text-xs font-bold">{item.cantidad} {item.unidad}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${ei.bg} ${ei.text}`}>{ei.label}</span>
+                        <span className="text-xs text-texto-suave">{item.center.nombre}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Formulario para agregar/actualizar inventario */}
+            <div className="rounded-xl border-2 border-acento/30 bg-superficie p-4">
+              <h3 className="text-sm font-bold">Actualizar inventario</h3>
+              {centers.length === 0 ? (
+                <p className="mt-2 text-xs text-texto-suave">No hay centros de acopio activos.</p>
+              ) : (
+                <>
+                  <select
+                    value={invCenter}
+                    onChange={(e) => {
+                      setInvCenter(e.target.value);
+                      const existing = inventory.filter((i) => i.centerId === e.target.value);
+                      if (existing.length > 0) {
+                        setInvItems(existing.map((i) => ({
+                          categoria: i.categoria, nombre: i.nombre,
+                          cantidad: i.cantidad, unidad: i.unidad, estado: i.estado,
+                        })));
+                      } else {
+                        setInvItems([]);
+                      }
+                    }}
+                    className="mt-2 w-full rounded-lg border border-borde bg-fondo px-3 py-2 text-sm"
+                  >
+                    <option value="">Seleccionar centro de acopio</option>
+                    {centers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nombre} — {c.direccion}</option>
+                    ))}
+                  </select>
+
+                  {invCenter && (
+                    <>
+                      <div className="mt-3 space-y-2">
+                        {invItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2 rounded-lg border border-borde p-2">
+                            <select
+                              value={item.categoria}
+                              onChange={(e) => {
+                                const copy = [...invItems];
+                                copy[idx].categoria = e.target.value;
+                                setInvItems(copy);
+                              }}
+                              className="rounded-lg border border-borde bg-fondo px-2 py-1 text-xs"
+                            >
+                              {INV_CATS.map((c) => (
+                                <option key={c.key} value={c.key}>{c.icon} {c.label}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              placeholder="Detalle"
+                              value={item.nombre}
+                              onChange={(e) => {
+                                const copy = [...invItems];
+                                copy[idx].nombre = e.target.value;
+                                setInvItems(copy);
+                              }}
+                              className="flex-1 min-w-0 rounded-lg border border-borde bg-fondo px-2 py-1 text-xs"
+                            />
+                            <input
+                              type="number"
+                              placeholder="Cant"
+                              value={item.cantidad}
+                              onChange={(e) => {
+                                const copy = [...invItems];
+                                copy[idx].cantidad = parseInt(e.target.value) || 0;
+                                setInvItems(copy);
+                              }}
+                              className="w-16 rounded-lg border border-borde bg-fondo px-2 py-1 text-xs text-center"
+                            />
+                            <select
+                              value={item.unidad}
+                              onChange={(e) => {
+                                const copy = [...invItems];
+                                copy[idx].unidad = e.target.value;
+                                setInvItems(copy);
+                              }}
+                              className="rounded-lg border border-borde bg-fondo px-2 py-1 text-xs"
+                            >
+                              <option value="unidades">uds</option>
+                              <option value="litros">lts</option>
+                              <option value="kg">kg</option>
+                              <option value="paquetes">paq</option>
+                              <option value="cajas">cajas</option>
+                            </select>
+                            <select
+                              value={item.estado}
+                              onChange={(e) => {
+                                const copy = [...invItems];
+                                copy[idx].estado = e.target.value;
+                                setInvItems(copy);
+                              }}
+                              className="rounded-lg border border-borde bg-fondo px-2 py-1 text-xs"
+                            >
+                              <option value="DISPONIBLE">Disponible</option>
+                              <option value="BAJO">Bajo</option>
+                              <option value="AGOTADO">Agotado</option>
+                            </select>
+                            <button
+                              onClick={() => setInvItems(invItems.filter((_, i) => i !== idx))}
+                              className="text-alerta text-xs font-bold px-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => setInvItems([...invItems, { categoria: "AGUA", nombre: "", cantidad: 0, unidad: "unidades", estado: "DISPONIBLE" }])}
+                          className="rounded-lg border border-borde px-3 py-1.5 text-xs font-semibold text-texto-suave hover:text-texto"
+                        >
+                          + Agregar item
+                        </button>
+                        <button
+                          disabled={invSaving}
+                          onClick={async () => {
+                            setInvSaving(true);
+                            await doAction("guardar-inventario", { centerId: invCenter, inventario: invItems } as any);
+                            setInvSaving(false);
+                          }}
+                          className="rounded-lg bg-acento px-4 py-1.5 text-xs font-bold text-superficie transition hover:opacity-90 disabled:opacity-50"
+                        >
+                          {invSaving ? "Guardando..." : "Guardar inventario"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         )}
 

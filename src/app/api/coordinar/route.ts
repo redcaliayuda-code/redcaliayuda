@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { accion, needId, volunteerId, estado, notas } = body;
+  const { accion, needId, volunteerId, estado, notas, centerId, inventario } = body;
 
   try {
     if (accion === "actualizar-necesidad") {
@@ -64,6 +64,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, need: { id: need.id, codigo: need.codigo, verificado: true } });
     }
 
+    if (accion === "guardar-inventario") {
+      if (!centerId || !Array.isArray(inventario)) {
+        return NextResponse.json({ error: "centerId e inventario requeridos" }, { status: 400 });
+      }
+      await prisma.inventoryItem.deleteMany({ where: { centerId } });
+      if (inventario.length > 0) {
+        await prisma.inventoryItem.createMany({
+          data: inventario.map((item: { categoria: string; nombre: string; cantidad: number; unidad: string; estado: string; notas?: string }) => ({
+            centerId,
+            categoria: item.categoria,
+            nombre: item.nombre || "",
+            cantidad: item.cantidad,
+            unidad: item.unidad || "unidades",
+            estado: item.estado || "DISPONIBLE",
+            notas: item.notas || "",
+          })),
+        });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -75,7 +96,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Codigo incorrecto" }, { status: 401 });
   }
 
-  const [needs, volunteers, missions] = await Promise.all([
+  const [needs, volunteers, missions, centers, inventory] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
       orderBy: [{ createdAt: "desc" }],
@@ -104,7 +125,21 @@ export async function GET(req: NextRequest) {
       take: 50,
       include: { need: { select: { codigo: true, zona: true } }, volunteer: { select: { nombre: true } } },
     }),
+    prisma.collectionCenter.findMany({
+      where: { activo: true },
+      select: { id: true, nombre: true, direccion: true, zona: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.inventoryItem.findMany({
+      orderBy: { categoria: "asc" },
+      include: { center: { select: { nombre: true } } },
+    }),
   ]);
 
-  return NextResponse.json({ needs, volunteers, missions });
+  const demanda: Record<string, number> = {};
+  for (const n of needs) {
+    demanda[n.categoria] = (demanda[n.categoria] || 0) + 1;
+  }
+
+  return NextResponse.json({ needs, volunteers, missions, centers, inventory, demanda });
 }

@@ -151,6 +151,29 @@ model CollectionCenter {
   activo Boolean @default(true)
 
   createdAt DateTime @default(now())
+
+  inventory InventoryItem[]
+}
+
+model InventoryItem {
+  id       String @id @default(cuid())
+  centerId String
+
+  categoria String // AGUA | ALIMENTOS | MEDICAMENTOS | HIGIENE | PANALES | COBIJAS | CARPAS | LINTERNAS | HERRAMIENTAS | ROPA | COLCHONETAS | OTRO
+  nombre    String @default("") // detalle: "Agua 500ml", "Cobijas térmicas"
+  cantidad  Int    @default(0)
+  unidad    String @default("unidades") // unidades | litros | kg | paquetes | cajas
+  estado    String @default("DISPONIBLE") // DISPONIBLE | BAJO | AGOTADO
+
+  notas String @default("")
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  center CollectionCenter @relation(fields: [centerId], references: [id])
+
+  @@index([centerId])
+  @@index([categoria])
 }
 
 // ---------------------------------------------------------------------------

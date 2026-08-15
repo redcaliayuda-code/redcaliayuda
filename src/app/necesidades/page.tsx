@@ -8,7 +8,7 @@ export default async function NecesidadesPublicas() {
   const [necesidades, voluntarios] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
-      orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ prioridad: "asc" }, { updatedAt: "desc" }],
       take: 200,
     }),
     prisma.volunteer.findMany({
@@ -32,7 +32,7 @@ export default async function NecesidadesPublicas() {
     ciudad: n.ciudad,
     lat: n.lat,
     lng: n.lng,
-    createdAt: n.createdAt.toISOString(),
+    createdAt: n.updatedAt.toISOString(),
   }));
 
   const volSerialized = voluntarios.map((v) => ({

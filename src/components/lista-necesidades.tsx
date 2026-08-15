@@ -70,7 +70,16 @@ const PRIO_BORDER: Record<string, string> = {
 
 function formatFecha(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString("es-CO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "ahora";
+  if (diffMin < 60) return `hace ${diffMin} min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `hace ${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `hace ${diffD}d`;
+  return d.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
 }
 
 function buildMapSrc(lat: number, lng: number, zoom: "close" | "overview", allPoints?: { lat: number; lng: number }[]) {

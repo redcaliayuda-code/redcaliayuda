@@ -136,10 +136,45 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  const demanda: Record<string, number> = {};
+  const ITEMS_KEYWORDS: [string, string[]][] = [
+    ["Agua", ["agua"]],
+    ["Comida/Alimentos", ["comida", "alimentos", "alimentación", "alimentacion"]],
+    ["Colchonetas", ["colchonetas", "colchoneta"]],
+    ["Cobijas", ["cobijas", "cobija", "frazadas"]],
+    ["Carpas", ["carpas", "carpa"]],
+    ["Pañales", ["pañales", "panal", "pañal"]],
+    ["Medicamentos", ["medicamentos", "medicinas", "medicina", "botiquín", "botiquin"]],
+    ["Linternas", ["linternas", "linterna"]],
+    ["Ropa", ["ropa"]],
+    ["Leche", ["leche"]],
+    ["Electrolitos", ["electrolitos"]],
+    ["Tapabocas", ["tapabocas"]],
+    ["Colchones", ["colchones", "colchon"]],
+    ["Comida animales", ["comida para animales", "mascotas"]],
+    ["Voluntarios", ["voluntarios"]],
+    ["Herramientas", ["herramientas"]],
+    ["Materiales reparar", ["materiales para reparar", "materiales"]],
+    ["Cintas seguridad", ["cintas de seguridad", "cintas"]],
+    ["Atención médica", ["atención médica", "atencion medica", "medico", "médico"]],
+    ["Atención psicológica", ["psicológica", "psicologica", "psicólogo", "psicologo"]],
+    ["Transporte", ["transporte"]],
+    ["Refugio/Albergue", ["refugio", "albergue", "alojamiento"]],
+  ];
+
+  const demandaItems: Record<string, number> = {};
   for (const n of needs) {
-    demanda[n.categoria] = (demanda[n.categoria] || 0) + 1;
+    const text = (n.descripcion + " " + (n.categoria === "OTRO" ? "" : n.categoria)).toLowerCase();
+    for (const [label, keywords] of ITEMS_KEYWORDS) {
+      if (keywords.some((kw) => text.includes(kw))) {
+        demandaItems[label] = (demandaItems[label] || 0) + 1;
+      }
+    }
   }
 
-  return NextResponse.json({ needs, volunteers, missions, centers, inventory, demanda });
+  const demandaCat: Record<string, number> = {};
+  for (const n of needs) {
+    demandaCat[n.categoria] = (demandaCat[n.categoria] || 0) + 1;
+  }
+
+  return NextResponse.json({ needs, volunteers, missions, centers, inventory, demandaItems, demandaCat });
 }

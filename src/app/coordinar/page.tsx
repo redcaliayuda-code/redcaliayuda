@@ -169,7 +169,7 @@ export default function CoordinarPage() {
     setMissions(data.missions);
     setCenters(data.centers || []);
     setInventory(data.inventory || []);
-    setDemanda(data.demanda || {});
+    setDemanda(data.demandaItems || {});
   }, [code]);
 
   async function handleLogin() {
@@ -186,7 +186,7 @@ export default function CoordinarPage() {
       setMissions(data.missions);
       setCenters(data.centers || []);
       setInventory(data.inventory || []);
-      setDemanda(data.demanda || {});
+      setDemanda(data.demandaItems || {});
     } else {
       setError("Codigo incorrecto");
     }
@@ -614,32 +614,38 @@ export default function CoordinarPage() {
         {/* Tab: Inventario */}
         {tab === "inventario" && (
           <div className="mt-4 space-y-4">
-            {/* Dashboard de demanda */}
+            {/* Dashboard de demanda específica */}
             <div className="rounded-xl border border-borde bg-superficie p-4">
-              <h3 className="text-sm font-bold">Lo que mas se pide</h3>
-              <p className="text-xs text-texto-suave">Basado en {needs.length} necesidades activas</p>
+              <h3 className="text-sm font-bold">Lo que mas se pide (analisis de descripciones)</h3>
+              <p className="text-xs text-texto-suave">Extraido de {needs.length} necesidades activas — items mencionados en las descripciones</p>
               <div className="mt-3 space-y-1.5">
-                {Object.entries(demanda)
-                  .sort((a, b) => b[1] - a[1])
-                  .slice(0, 10)
-                  .map(([cat, count]) => {
-                    const inv = INV_CATS.find((c) => c.key === cat);
-                    const maxCount = Math.max(...Object.values(demanda));
-                    const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                    const invTotal = inventory
-                      .filter((i) => i.categoria === cat)
-                      .reduce((s, i) => s + i.cantidad, 0);
+                {(() => {
+                  const ITEM_ICONS: Record<string, string> = {
+                    "Agua": "💧", "Comida/Alimentos": "🍚", "Colchonetas": "🛌", "Cobijas": "🛏️",
+                    "Carpas": "⛺", "Pañales": "👶", "Medicamentos": "💊", "Linternas": "🔦",
+                    "Ropa": "👕", "Leche": "🍼", "Electrolitos": "⚡", "Tapabocas": "😷",
+                    "Colchones": "🛏️", "Comida animales": "🐾", "Voluntarios": "🤝",
+                    "Herramientas": "🔧", "Materiales reparar": "🧱", "Cintas seguridad": "🚧",
+                    "Atención médica": "🏥", "Atención psicológica": "🧠", "Transporte": "🚗",
+                    "Refugio/Albergue": "🏠",
+                  };
+                  const sorted = Object.entries(demanda).sort((a, b) => b[1] - a[1]);
+                  const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+                  return sorted.map(([item, count]) => {
+                    const pct = (count / maxCount) * 100;
+                    const invKey = INV_CATS.find((c) => c.label.toLowerCase().includes(item.toLowerCase()))?.key;
+                    const invTotal = invKey
+                      ? inventory.filter((i) => i.categoria === invKey).reduce((s, i) => s + i.cantidad, 0)
+                      : 0;
+                    const barColor = pct > 60 ? "bg-alerta/70" : pct > 30 ? "bg-aviso/70" : "bg-acento/50";
                     return (
-                      <div key={cat} className="flex items-center gap-2">
-                        <span className="w-5 text-center text-sm">{inv?.icon || "📋"}</span>
-                        <span className="w-24 text-xs font-medium truncate">{inv?.label || cat}</span>
+                      <div key={item} className="flex items-center gap-2">
+                        <span className="w-5 text-center text-sm">{ITEM_ICONS[item] || "📋"}</span>
+                        <span className="w-32 text-xs font-medium truncate">{item}</span>
                         <div className="flex-1 h-5 rounded-full bg-superficie-elevada overflow-hidden relative">
-                          <div
-                            className="h-full rounded-full bg-alerta/70 transition-all"
-                            style={{ width: `${pct}%` }}
-                          />
+                          <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
                           <span className="absolute inset-0 flex items-center justify-center text-xs font-bold">
-                            {count} pedidos
+                            {count} mencion{count !== 1 ? "es" : ""}
                           </span>
                         </div>
                         <div className={`w-20 text-right text-xs font-bold ${invTotal > 0 ? "text-ok" : "text-alerta"}`}>
@@ -647,7 +653,8 @@ export default function CoordinarPage() {
                         </div>
                       </div>
                     );
-                  })}
+                  });
+                })()}
               </div>
             </div>
 

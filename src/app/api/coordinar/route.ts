@@ -78,8 +78,8 @@ export async function GET(req: NextRequest) {
   const [needs, volunteers, missions] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
-      orderBy: [{ prioridad: "asc" }, { createdAt: "desc" }],
-      take: 300,
+      orderBy: [{ updatedAt: "desc" }],
+      take: 1000,
       select: {
         id: true, codigo: true, categoria: true, prioridad: true,
         descripcion: true, zona: true, ciudad: true, lat: true, lng: true,

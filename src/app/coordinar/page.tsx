@@ -56,6 +56,13 @@ const CAT: Record<string, string> = {
   EVACUACION: "Evacuacion", TRANSPORTE: "Transporte", OTRO: "Otro",
 };
 
+const TIPO_VOL: Record<string, { label: string; icon: string; bg: string; text: string; border: string }> = {
+  VOLUNTARIO: { label: "Voluntario", icon: "🤝", bg: "bg-acento-suave", text: "text-acento", border: "border-acento/40" },
+  ESPECIALISTA: { label: "Especialista", icon: "⚕️", bg: "bg-[#7c3aed]/15", text: "text-[#7c3aed]", border: "border-[#7c3aed]/40" },
+  RECURSOS: { label: "Recursos", icon: "📦", bg: "bg-ok-suave", text: "text-ok", border: "border-ok/40" },
+  LOGISTICA: { label: "Logística", icon: "🚛", bg: "bg-aviso-suave", text: "text-aviso", border: "border-aviso/40" },
+};
+
 const PRIO: Record<string, { label: string; color: string }> = {
   P1: { label: "VIDA", color: "#ef4444" },
   P2: { label: "SUPERVIVENCIA", color: "#f59e0b" },
@@ -412,33 +419,38 @@ export default function CoordinarPage() {
                                 : `${matchingVols.length} voluntario${matchingVols.length !== 1 ? "s" : ""} recomendados`}
                             </div>
                             <div className="mt-2 space-y-1">
-                              {matchingVols.map((v) => (
-                                <div key={v.id} className="flex items-center justify-between gap-2 rounded-lg bg-superficie p-2">
-                                  <div className="min-w-0">
-                                    <span className="text-xs font-medium">{v.nombre}</span>
-                                    <span className="ml-1 text-xs text-texto-suave">{v.vehiculo !== "NINGUNO" ? `🚗 ${v.vehiculo}` : ""}</span>
-                                    <span className="ml-1 text-xs text-texto-suave">· {v.zona || v.tipoAyuda}</span>
+                              {matchingVols.map((v) => {
+                                const tv = TIPO_VOL[v.tipoAyuda] || TIPO_VOL.VOLUNTARIO;
+                                return (
+                                  <div key={v.id} className={`flex items-center justify-between gap-2 rounded-lg border ${tv.border} bg-superficie p-2`}>
+                                    <div className="min-w-0">
+                                      <span className="text-xs font-medium">{v.nombre}</span>
+                                      <span className={`ml-1.5 text-xs font-bold ${tv.text}`}>{tv.icon} {tv.label}</span>
+                                      {v.especializacion && <span className="ml-1 text-xs text-texto-suave">· {v.especializacion}</span>}
+                                      {v.vehiculo !== "NINGUNO" && <span className="ml-1 text-xs text-aviso">· 🚗 {v.vehiculo}</span>}
+                                      {!v.especializacion && <span className="ml-1 text-xs text-texto-suave">· {v.zona || ""}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {v.dist != null && <span className="text-xs font-bold text-acento">{distLabel(v.dist)}</span>}
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); doAction("crear-mision", { needId: n.id, volunteerId: v.id }); }}
+                                        className="rounded-lg bg-acento px-2 py-1 text-xs font-bold text-superficie"
+                                      >
+                                        Asignar
+                                      </button>
+                                      <a
+                                        href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinador(a) de Collab x Mindo. Hay una necesidad en ${n.zona || n.ciudad} (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar?${n.lat && n.lng ? ` Maps: https://www.google.com/maps?q=${n.lat},${n.lng}` : ""}`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-ok"
+                                      >
+                                        💬
+                                      </a>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    {v.dist != null && <span className="text-xs font-bold text-acento">{distLabel(v.dist)}</span>}
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); doAction("crear-mision", { needId: n.id, volunteerId: v.id }); }}
-                                      className="rounded-lg bg-acento px-2 py-1 text-xs font-bold text-superficie"
-                                    >
-                                      Asignar
-                                    </button>
-                                    <a
-                                      href={`https://wa.me/57${v.celular}?text=${encodeURIComponent(`Hola ${v.nombre}, soy coordinador(a) de Collab x Mindo. Hay una necesidad en ${n.zona || n.ciudad} (${n.codigo}): ${n.descripcion.slice(0, 80)}. Puedes ayudar?${n.lat && n.lng ? ` Maps: https://www.google.com/maps?q=${n.lat},${n.lng}` : ""}`)}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="text-ok"
-                                    >
-                                      💬
-                                    </a>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -455,50 +467,57 @@ export default function CoordinarPage() {
         {tab === "voluntarios" && (
           <div className="mt-4 space-y-2" style={{ maxHeight: "70vh", overflowY: "auto" }}>
             {volunteers.map((v) => (
-              <div key={v.id} className="rounded-xl border border-borde bg-superficie p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold">{v.nombre}</span>
-                      <span className="rounded-full bg-acento-suave px-2 py-0.5 text-xs font-semibold text-acento">{v.tipoAyuda}</span>
-                      {v.verificado && <span className="rounded-full bg-ok-suave px-2 py-0.5 text-xs font-semibold text-ok">Verificado</span>}
-                      {v.misionesCompletadas > 0 && (
-                        <span className="rounded-full bg-aviso-suave px-2 py-0.5 text-xs text-aviso">{v.misionesCompletadas} mision{v.misionesCompletadas !== 1 ? "es" : ""}</span>
-                      )}
-                    </div>
-                    {v.especializacion && (
-                      <div className="mt-1 text-xs font-medium text-acento">
-                        Especialidad: {v.especializacion}
+              (() => {
+                const tv = TIPO_VOL[v.tipoAyuda] || TIPO_VOL.VOLUNTARIO;
+                return (
+                  <div key={v.id} className={`rounded-xl border-2 ${tv.border} bg-superficie p-3`} style={{ borderLeftWidth: 4 }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold">{v.nombre}</span>
+                          <span className={`rounded-full ${tv.bg} px-2 py-0.5 text-xs font-bold ${tv.text}`}>
+                            {tv.icon} {tv.label}
+                          </span>
+                          {v.verificado && <span className="rounded-full bg-ok-suave px-2 py-0.5 text-xs font-semibold text-ok">Verificado</span>}
+                          {v.misionesCompletadas > 0 && (
+                            <span className="rounded-full bg-superficie-elevada px-2 py-0.5 text-xs text-texto-suave">{v.misionesCompletadas} mision{v.misionesCompletadas !== 1 ? "es" : ""}</span>
+                          )}
+                        </div>
+                        {v.especializacion && (
+                          <div className={`mt-1 text-xs font-medium ${tv.text}`}>
+                            {tv.icon} {v.especializacion}
+                          </div>
+                        )}
+                        {v.descripcion && <p className="mt-0.5 text-xs text-texto-suave">{v.descripcion}</p>}
+                        {v.recursosOfrecidos && (
+                          <div className="mt-1 rounded-lg bg-ok-suave/40 px-2 py-1 text-xs text-ok">
+                            Ofrece: {v.recursosOfrecidos}
+                          </div>
+                        )}
+                        <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-texto-suave">
+                          <span>{v.zona || "Cali"}</span>
+                          <span>· {v.disponibilidad === "AHORA" ? "Disponible ahora" : v.disponibilidad === "HOY" ? "Hoy" : v.disponibilidad === "VARIOS_DIAS" ? "Varios dias" : v.disponibilidad}</span>
+                          {v.vehiculo !== "NINGUNO" && (
+                            <span className="text-aviso">· 🚗 {v.vehiculo}{v.capacidadCarga ? ` (${v.capacidadCarga})` : ""}</span>
+                          )}
+                          {v.lat && v.lng && <span className="text-ok">· GPS</span>}
+                        </div>
+                        <div className="mt-1 text-xs text-texto-suave">
+                          {v.codigo} · {v.createdAt ? formatFecha(v.createdAt) : ""}
+                        </div>
                       </div>
-                    )}
-                    {v.descripcion && <p className="mt-0.5 text-xs text-texto-suave">{v.descripcion}</p>}
-                    {v.recursosOfrecidos && (
-                      <div className="mt-1 rounded-lg bg-ok-suave/40 px-2 py-1 text-xs text-ok">
-                        Ofrece: {v.recursosOfrecidos}
-                      </div>
-                    )}
-                    <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-texto-suave">
-                      <span>{v.zona || "Cali"}</span>
-                      <span>· {v.disponibilidad === "AHORA" ? "Disponible ahora" : v.disponibilidad === "HOY" ? "Hoy" : v.disponibilidad === "VARIOS_DIAS" ? "Varios dias" : v.disponibilidad}</span>
-                      {v.vehiculo !== "NINGUNO" && (
-                        <span className="text-aviso">· 🚗 {v.vehiculo}{v.capacidadCarga ? ` (${v.capacidadCarga})` : ""}</span>
-                      )}
-                      {v.lat && v.lng && <span className="text-ok">· GPS</span>}
-                    </div>
-                    <div className="mt-1 text-xs text-texto-suave">
-                      {v.codigo} · {v.createdAt ? formatFecha(v.createdAt) : ""}
+                      <a
+                        href={`https://wa.me/57${v.celular}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg bg-ok-suave px-3 py-2 text-sm font-semibold text-ok transition hover:bg-ok hover:text-superficie"
+                      >
+                        💬 WhatsApp
+                      </a>
                     </div>
                   </div>
-                  <a
-                    href={`https://wa.me/57${v.celular}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 rounded-lg bg-ok-suave px-3 py-2 text-sm font-semibold text-ok transition hover:bg-ok hover:text-superficie"
-                  >
-                    💬 WhatsApp
-                  </a>
-                </div>
-              </div>
+                );
+              })()
             ))}
           </div>
         )}

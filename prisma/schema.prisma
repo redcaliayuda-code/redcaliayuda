@@ -315,6 +315,46 @@ model TurnoVoluntario {
 }
 
 // ---------------------------------------------------------------------------
+// FINANZAS — registro de ingresos y presupuesto
+// ---------------------------------------------------------------------------
+
+model Ingreso {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  monto    Float
+  moneda   String @default("USD") // USD | COP
+  fuente   String // GOFUNDME | DONACION_DIRECTA | ONG | GOBIERNO | EMPRESA | OTRO
+  donante  String @default("") // nombre o anonimo
+  concepto String @default("")
+  notas    String @default("")
+
+  fecha     DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([fuente])
+  @@index([fecha])
+}
+
+model Gasto {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  monto     Float
+  moneda    String @default("USD")
+  area      String // VIVIENDA | INFRAESTRUCTURA | SALUD | AGUA_SANEAMIENTO | EDUCACION | ALIMENTACION | EQUIPOS_RESCATE | LOGISTICA | ADMIN | OTRO
+  concepto  String
+  proveedor String @default("")
+  notas     String @default("")
+
+  fecha     DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([area])
+  @@index([fecha])
+}
+
+// ---------------------------------------------------------------------------
 // EVENTOS — trazabilidad completa
 // ---------------------------------------------------------------------------
 

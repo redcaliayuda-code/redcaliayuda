@@ -151,6 +151,18 @@ export default async function Landing() {
             </div>
           </Link>
           <Link
+            href="/rescatistas"
+            className="toque-activo flex items-center gap-3 rounded-2xl border-2 border-aviso bg-aviso-suave px-4 py-4 transition hover:opacity-90"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-aviso/20 text-xl">
+              🦺
+            </div>
+            <div>
+              <div className="text-sm font-bold text-aviso">Rescatistas</div>
+              <div className="text-xs text-texto-suave">Registro y relevos</div>
+            </div>
+          </Link>
+          <Link
             href="/recursos"
             className="toque-activo flex items-center gap-3 rounded-2xl border border-borde bg-superficie px-4 py-4 transition hover:border-acento"
           >

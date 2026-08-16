@@ -247,6 +247,32 @@ model ZoneReport {
 }
 
 // ---------------------------------------------------------------------------
+// RESCATISTAS — registro y control de equipos de rescate
+// ---------------------------------------------------------------------------
+
+model Rescatista {
+  id     String @id @default(cuid())
+  codigo String @unique
+
+  nombre       String
+  celular      String
+  zona         String
+  especialidad String @default("") // bombero, paramédico, estructural, etc.
+  equipo       String @default("") // grupo/organización
+
+  herramientasTiene    String @default("") // lo que ya tiene
+  herramientasNecesita String @default("") // lo que le falta
+  estado               String @default("ACTIVO") // ACTIVO | DESCANSANDO | INACTIVO
+  notas                String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zona])
+  @@index([estado])
+}
+
+// ---------------------------------------------------------------------------
 // TURNOS / RELEVOS — gestión de descanso de rescatistas
 // ---------------------------------------------------------------------------
 

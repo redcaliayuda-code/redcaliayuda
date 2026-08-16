@@ -49,78 +49,80 @@ const AREAS: Record<string, { label: string; icon: string; color: string }> = {
   OTRO: { label: "Otro", icon: "📦", color: "text-texto-suave" },
 };
 
+// Costos basados en datos reales: FOREC 1999, UNGRD, INVIAS, DNP, UNICEF,
+// Plan Milagro 2026, Cruz Roja, WFP. Conversión: COP 4,200 = USD 1.
 const SIMULADOR_AREAS = [
   {
     key: "VIVIENDA",
     label: "Vivienda",
     icon: "🏠",
-    desc: "Reparación y reconstrucción de hogares",
-    unidad: "hogares reparados",
-    costoPorUnidad: 5000,
-    pct: 0.30,
+    desc: "Reparación estructural ~$5,300 / Reconstrucción rural ~$18,000 por vivienda (Plan Milagro, FOREC)",
+    unidad: "viviendas reparadas",
+    costoPorUnidad: 5300,
+    pct: 0.45,
   },
   {
     key: "INFRAESTRUCTURA",
     label: "Infraestructura",
     icon: "🏗️",
-    desc: "Vías, puentes, redes eléctricas",
-    unidad: "km de vía / puentes",
-    costoPorUnidad: 25000,
-    pct: 0.20,
+    desc: "Vías terciarias ~$200,000/km, puentes vehiculares ~$200,000 (INVIAS, DNP)",
+    unidad: "km de vía terciaria",
+    costoPorUnidad: 200000,
+    pct: 0.18,
   },
   {
     key: "SALUD",
     label: "Salud",
     icon: "🏥",
-    desc: "Brigadas médicas, medicamentos, equipos",
-    unidad: "brigadas médicas",
-    costoPorUnidad: 3000,
-    pct: 0.15,
+    desc: "Brigadas médicas móviles ~$20,000/semana, kits médicos ~$3,500/1000 personas (Cruz Roja, OMS)",
+    unidad: "brigadas médicas (1 semana)",
+    costoPorUnidad: 20000,
+    pct: 0.07,
   },
   {
     key: "AGUA_SANEAMIENTO",
     label: "Agua y saneamiento",
     icon: "💧",
-    desc: "Potabilización, tanques, saneamiento",
-    unidad: "sistemas de agua",
-    costoPorUnidad: 8000,
-    pct: 0.10,
+    desc: "Sistema comunitario ~$250,000, kit WASH familiar ~$42 (UNICEF Colombia)",
+    unidad: "familias con kit WASH",
+    costoPorUnidad: 42,
+    pct: 0.06,
   },
   {
     key: "EDUCACION",
     label: "Educación",
     icon: "🎓",
-    desc: "Reparación de escuelas, kits escolares",
+    desc: "Reparación escuela ~$75,000, reconstrucción ~$350,000 (Fe y Alegría, CAF)",
     unidad: "escuelas reparadas",
-    costoPorUnidad: 15000,
-    pct: 0.08,
+    costoPorUnidad: 75000,
+    pct: 0.06,
   },
   {
     key: "ALIMENTACION",
     label: "Alimentación",
     icon: "🍚",
-    desc: "Kits alimentarios, comedores comunitarios",
-    unidad: "kits alimentarios",
-    costoPorUnidad: 50,
-    pct: 0.10,
+    desc: "Kit alimentario familiar ~$65/mes, olla comunitaria ~$1,000/mes (UNGRD, WFP)",
+    unidad: "familias alimentadas (1 mes)",
+    costoPorUnidad: 65,
+    pct: 0.08,
   },
   {
     key: "EQUIPOS_RESCATE",
     label: "Equipos de rescate",
     icon: "🦺",
-    desc: "Herramientas, EPP, equipos de comunicación",
-    unidad: "kits de equipo",
-    costoPorUnidad: 2000,
-    pct: 0.05,
+    desc: "Kit personal rescatista ~$5,500, kit equipo SAR 4 personas ~$2,250 (FEMA, industria)",
+    unidad: "rescatistas equipados",
+    costoPorUnidad: 5500,
+    pct: 0.02,
   },
   {
     key: "LOGISTICA",
     label: "Logística",
     icon: "🚛",
-    desc: "Transporte, combustible, almacenamiento",
-    unidad: "operaciones logísticas",
-    costoPorUnidad: 1500,
-    pct: 0.02,
+    desc: "Transporte ~$215/tonelada de ayuda, 60-80% del gasto humanitario (OCHA, MinTransporte)",
+    unidad: "toneladas de ayuda entregadas",
+    costoPorUnidad: 215,
+    pct: 0.08,
   },
 ];
 
@@ -660,7 +662,7 @@ export default function FinanzasPage() {
                 </table>
               </div>
               <p className="mt-2 text-[10px] text-texto-suave">
-                * Unidades estimadas por área. Los costos reales varían según zona, materiales y mano de obra disponible.
+                * Costos basados en datos de FOREC, UNGRD, INVIAS, DNP, UNICEF, Cruz Roja, WFP y Plan Milagro 2026. Los montos son promedios y varían según zona y condiciones locales.
               </p>
             </div>
 
@@ -683,6 +685,22 @@ export default function FinanzasPage() {
                 </div>
               </div>
             )}
+
+            {/* Fuentes */}
+            <div className="rounded-xl border border-borde bg-superficie p-4">
+              <h3 className="text-sm font-bold">Fuentes de costos</h3>
+              <ul className="mt-2 space-y-1 text-[10px] text-texto-suave leading-relaxed">
+                <li>🏠 <strong>Vivienda:</strong> Plan Milagro 2026 (COP 15-30M/vivienda), FOREC Armenia 1999, Argos costos construcción 2026</li>
+                <li>🏗️ <strong>Infraestructura:</strong> INVIAS calculadora de costos 2025, DNP Proyectos Tipo (puentes vehiculares)</li>
+                <li>🏥 <strong>Salud:</strong> Cruz Roja Colombiana, OMS equipos médicos de emergencia, Direct Relief</li>
+                <li>💧 <strong>Agua:</strong> UNICEF Colombia programas WASH ($42/familia kit emergencia, $250K/sistema comunitario)</li>
+                <li>🎓 <strong>Educación:</strong> Fe y Alegría ($1.25M para 14 escuelas), CAF programa $48M infraestructura educativa</li>
+                <li>🍚 <strong>Alimentación:</strong> UNGRD guía asistencia alimentaria, WFP costos raciones América Latina, D1 kits</li>
+                <li>🦺 <strong>Rescate:</strong> FEMA estándares USAR, equipamiento SAR industria</li>
+                <li>🚛 <strong>Logística:</strong> MinTransporte SICE-TAC, OCHA/WFP cadena de suministro humanitario</li>
+              </ul>
+              <p className="mt-2 text-[10px] text-texto-suave italic">Conversión: COP 4,200 = USD 1. Distribución basada en FOREC 1999 y metodología PDNA del Banco Mundial.</p>
+            </div>
           </div>
         )}
       </div>

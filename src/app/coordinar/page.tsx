@@ -51,6 +51,25 @@ type Mission = {
 
 type Center = { id: string; nombre: string; direccion: string; zona: string };
 
+type TurnoAsig = {
+  id: string;
+  estado: string;
+  inicioReal: string | null;
+  finReal: string | null;
+  volunteer: { id: string; nombre: string; celular: string; tipoAyuda: string; especializacion: string };
+};
+
+type Turno = {
+  id: string;
+  zona: string;
+  titulo: string;
+  inicio: string;
+  fin: string;
+  estado: string;
+  notas: string;
+  asignaciones: TurnoAsig[];
+};
+
 type InvItem = {
   id: string;
   centerId: string;
@@ -148,9 +167,10 @@ export default function CoordinarPage() {
   const [centers, setCenters] = useState<Center[]>([]);
   const [inventory, setInventory] = useState<InvItem[]>([]);
   const [demanda, setDemanda] = useState<Record<string, number>>({});
+  const [turnos, setTurnos] = useState<Turno[]>([]);
 
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null);
-  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "misiones" | "inventario" | "zonas">("necesidades");
+  const [tab, setTab] = useState<"necesidades" | "voluntarios" | "zonas" | "relevos" | "inventario" | "misiones">("necesidades");
   const [invCenter, setInvCenter] = useState<string>("");
   const [invItems, setInvItems] = useState<{ categoria: string; nombre: string; cantidad: number; unidad: string; estado: string }[]>([]);
   const [invSaving, setInvSaving] = useState(false);
@@ -173,6 +193,7 @@ export default function CoordinarPage() {
     setCenters(data.centers || []);
     setInventory(data.inventory || []);
     setDemanda(data.demandaItems || {});
+    setTurnos(data.turnos || []);
   }, [code]);
 
   async function handleLogin() {
@@ -190,6 +211,7 @@ export default function CoordinarPage() {
       setCenters(data.centers || []);
       setInventory(data.inventory || []);
       setDemanda(data.demandaItems || {});
+      setTurnos(data.turnos || []);
     } else {
       setError("Codigo incorrecto");
     }
@@ -505,20 +527,21 @@ export default function CoordinarPage() {
         )}
 
         {/* Tabs */}
-        <div className="mt-4 flex gap-1 rounded-xl bg-superficie-elevada p-1">
-          {(["necesidades", "voluntarios", "zonas", "inventario", "misiones"] as const).map((t) => (
+        <div className="mt-4 flex gap-1 overflow-x-auto rounded-xl bg-superficie-elevada p-1">
+          {(["necesidades", "voluntarios", "zonas", "relevos", "inventario", "misiones"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition ${
                 tab === t ? "bg-acento text-superficie" : "text-texto-suave hover:text-texto"
               }`}
             >
-              {t === "necesidades" ? `Necesidades`
-                : t === "voluntarios" ? `Voluntarios`
-                : t === "zonas" ? `Zonas`
-                : t === "inventario" ? `Inventario`
-                : `Misiones`}
+              {t === "necesidades" ? "Necesidades"
+                : t === "voluntarios" ? "Voluntarios"
+                : t === "zonas" ? "Zonas"
+                : t === "relevos" ? "Relevos"
+                : t === "inventario" ? "Inventario"
+                : "Misiones"}
             </button>
           ))}
         </div>
@@ -892,6 +915,209 @@ export default function CoordinarPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Tab: Relevos */}
+        {tab === "relevos" && (
+          <div className="mt-4 space-y-4">
+            {/* Resumen de estado */}
+            {(() => {
+              const now = Date.now();
+              const activos = turnos.flatMap((t) => t.asignaciones.filter((a) => a.estado === "ACTIVO"));
+              const descansando = turnos.flatMap((t) => t.asignaciones.filter((a) => a.estado === "DESCANSANDO"));
+              const fatigados = activos.filter((a) => a.inicioReal && (now - new Date(a.inicioReal).getTime()) > 6 * 60 * 60 * 1000);
+              return (
+                <>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-xl bg-ok-suave p-3 text-center">
+                      <div className="text-xl font-bold text-ok">{activos.length}</div>
+                      <div className="text-xs text-texto-suave">Activos</div>
+                    </div>
+                    <div className="rounded-xl bg-acento-suave p-3 text-center">
+                      <div className="text-xl font-bold text-acento">{descansando.length}</div>
+                      <div className="text-xs text-texto-suave">Descansando</div>
+                    </div>
+                    <div className="rounded-xl bg-aviso-suave p-3 text-center">
+                      <div className="text-xl font-bold text-aviso">{turnos.reduce((s, t) => s + t.asignaciones.filter((a) => a.estado === "ASIGNADO").length, 0)}</div>
+                      <div className="text-xs text-texto-suave">Esperando</div>
+                    </div>
+                    <div className="rounded-xl bg-superficie-elevada p-3 text-center">
+                      <div className="text-xl font-bold">{turnos.length}</div>
+                      <div className="text-xs text-texto-suave">Turnos</div>
+                    </div>
+                  </div>
+
+                  {fatigados.length > 0 && (
+                    <div className="rounded-lg bg-alerta-suave px-3 py-2 text-xs font-semibold text-alerta">
+                      ⚠️ {fatigados.length} rescatista{fatigados.length > 1 ? "s" : ""} lleva{fatigados.length > 1 ? "n" : ""} mas de 6 horas activo{fatigados.length > 1 ? "s" : ""} — necesita{fatigados.length > 1 ? "n" : ""} relevo
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Turnos activos y programados */}
+            {turnos.length === 0 ? (
+              <div className="rounded-xl border border-borde bg-superficie p-8 text-center text-sm text-texto-suave">
+                No hay turnos creados. Crea uno abajo para organizar los relevos.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {turnos.map((turno) => {
+                  const now = Date.now();
+                  const inicio = new Date(turno.inicio);
+                  const fin = new Date(turno.fin);
+                  const esActivo = turno.estado === "ACTIVO" || (now >= inicio.getTime() && now <= fin.getTime());
+                  return (
+                    <div key={turno.id} className={`rounded-xl border-2 bg-superficie p-4 ${esActivo ? "border-ok/50" : "border-borde"}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${esActivo ? "bg-ok-suave text-ok" : "bg-superficie-elevada text-texto-suave"}`}>
+                              {esActivo ? "EN CURSO" : "PROGRAMADO"}
+                            </span>
+                            <span className="text-sm font-bold">{turno.titulo || turno.zona}</span>
+                          </div>
+                          <div className="mt-1 text-xs text-texto-suave">
+                            {turno.zona} · {inicio.toLocaleDateString("es-CO", { day: "numeric", month: "short" })} {inicio.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })} — {fin.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                          {turno.notas && <p className="mt-1 text-xs text-texto-suave">{turno.notas}</p>}
+                        </div>
+                        <div className="flex gap-1">
+                          {turno.estado !== "ACTIVO" && (
+                            <button
+                              onClick={() => doAction("estado-turno", { turnoId: turno.id, estado: "ACTIVO" })}
+                              className="rounded-lg bg-ok-suave px-2 py-1 text-xs font-semibold text-ok"
+                            >
+                              Iniciar
+                            </button>
+                          )}
+                          <button
+                            onClick={() => doAction("estado-turno", { turnoId: turno.id, estado: "COMPLETADO" })}
+                            className="rounded-lg bg-superficie-elevada px-2 py-1 text-xs font-semibold text-texto-suave"
+                          >
+                            Finalizar
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Asignaciones */}
+                      <div className="mt-3 space-y-1.5">
+                        {turno.asignaciones.map((a) => {
+                          const tv = TIPO_VOL[a.volunteer.tipoAyuda] || TIPO_VOL.VOLUNTARIO;
+                          const horasActivo = a.inicioReal ? ((now - new Date(a.inicioReal).getTime()) / 3600000).toFixed(1) : null;
+                          const fatiga = horasActivo && parseFloat(horasActivo) > 6;
+                          return (
+                            <div key={a.id} className={`flex items-center justify-between gap-2 rounded-lg border p-2 ${
+                              a.estado === "ACTIVO" ? (fatiga ? "border-alerta/40 bg-alerta-suave/30" : "border-ok/40 bg-ok-suave/30") :
+                              a.estado === "DESCANSANDO" ? "border-acento/40 bg-acento-suave/30" :
+                              "border-borde"
+                            }`}>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-xs font-medium">{a.volunteer.nombre}</span>
+                                  <span className={`text-xs font-bold ${tv.text}`}>{tv.icon}</span>
+                                  {a.volunteer.especializacion && <span className="text-xs text-texto-suave">· {a.volunteer.especializacion}</span>}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className={`rounded-full px-1.5 py-0.5 text-xs font-bold ${
+                                    a.estado === "ACTIVO" ? (fatiga ? "bg-alerta-suave text-alerta" : "bg-ok-suave text-ok") :
+                                    a.estado === "DESCANSANDO" ? "bg-acento-suave text-acento" :
+                                    a.estado === "COMPLETADO" ? "bg-superficie-elevada text-texto-suave" :
+                                    "bg-aviso-suave text-aviso"
+                                  }`}>
+                                    {a.estado === "ACTIVO" ? (fatiga ? `⚠️ ${horasActivo}h` : `${horasActivo}h activo`) :
+                                     a.estado === "DESCANSANDO" ? "Descansando" :
+                                     a.estado === "COMPLETADO" ? "Completado" : "Esperando"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {a.estado === "ASIGNADO" && (
+                                  <button onClick={() => doAction("estado-asignacion", { asignacionId: a.id, estado: "ACTIVO" })}
+                                    className="rounded-lg bg-ok px-2 py-1 text-xs font-bold text-superficie">Activar</button>
+                                )}
+                                {a.estado === "ACTIVO" && (
+                                  <button onClick={() => doAction("estado-asignacion", { asignacionId: a.id, estado: "DESCANSANDO" })}
+                                    className="rounded-lg bg-acento px-2 py-1 text-xs font-bold text-superficie">Descanso</button>
+                                )}
+                                {a.estado === "DESCANSANDO" && (
+                                  <button onClick={() => doAction("estado-asignacion", { asignacionId: a.id, estado: "ACTIVO" })}
+                                    className="rounded-lg bg-ok px-2 py-1 text-xs font-bold text-superficie">Reactivar</button>
+                                )}
+                                <a href={`https://wa.me/57${a.volunteer.celular}`} target="_blank" rel="noopener noreferrer"
+                                  className="text-ok text-sm">💬</a>
+                                <button onClick={() => doAction("eliminar-asignacion", { asignacionId: a.id })}
+                                  className="text-alerta text-xs font-bold px-1">✕</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Agregar voluntario al turno */}
+                      <div className="mt-2">
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              doAction("asignar-turno", { turnoId: turno.id, volunteerId: e.target.value });
+                              e.target.value = "";
+                            }
+                          }}
+                          className="w-full rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs"
+                        >
+                          <option value="">+ Agregar voluntario al turno</option>
+                          {volunteers
+                            .filter((v) => !turno.asignaciones.some((a) => a.volunteer.id === v.id))
+                            .slice(0, 20)
+                            .map((v) => (
+                              <option key={v.id} value={v.id}>{v.nombre} — {TIPO_VOL[v.tipoAyuda]?.label || v.tipoAyuda}{v.especializacion ? ` (${v.especializacion})` : ""}</option>
+                            ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Crear nuevo turno */}
+            <div className="rounded-xl border-2 border-acento/30 bg-superficie p-4">
+              <h3 className="text-sm font-bold">Crear turno</h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const fd = new FormData(form);
+                  await doAction("crear-turno", {
+                    zona: fd.get("zona") as string,
+                    titulo: fd.get("titulo") as string,
+                    inicio: fd.get("inicio") as string,
+                    fin: fd.get("fin") as string,
+                    notas: fd.get("notas") as string,
+                  });
+                  form.reset();
+                }}
+                className="mt-2 space-y-2"
+              >
+                <div className="flex gap-2">
+                  <select name="zona" required className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs">
+                    <option value="">Zona</option>
+                    {zonas.map((z) => <option key={z} value={z}>{z}</option>)}
+                  </select>
+                  <input name="titulo" placeholder="Titulo (ej: Turno nocturno)" className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                </div>
+                <div className="flex gap-2">
+                  <input name="inicio" type="datetime-local" required className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                  <input name="fin" type="datetime-local" required className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                </div>
+                <input name="notas" placeholder="Notas (opcional)" className="w-full rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                <button type="submit" className="rounded-lg bg-acento px-4 py-1.5 text-xs font-bold text-superficie transition hover:opacity-90">
+                  Crear turno
+                </button>
+              </form>
+            </div>
           </div>
         )}
 

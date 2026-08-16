@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { accion, needId, volunteerId, estado, notas, centerId, inventario } = body;
+  const { accion, needId, volunteerId, estado, notas, centerId, inventario, turnoId, zona, titulo, inicio, fin, asignacionId } = body;
 
   try {
     if (accion === "actualizar-necesidad") {
@@ -85,6 +85,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (accion === "crear-turno") {
+      if (!zona || !inicio || !fin) {
+        return NextResponse.json({ error: "zona, inicio y fin requeridos" }, { status: 400 });
+      }
+      const turno = await prisma.turno.create({
+        data: {
+          zona,
+          titulo: titulo || "",
+          inicio: new Date(inicio),
+          fin: new Date(fin),
+          notas: notas || "",
+        },
+      });
+      return NextResponse.json({ ok: true, turno: { id: turno.id } });
+    }
+
+    if (accion === "asignar-turno") {
+      if (!turnoId || !volunteerId) {
+        return NextResponse.json({ error: "turnoId y volunteerId requeridos" }, { status: 400 });
+      }
+      const asig = await prisma.turnoVoluntario.create({
+        data: { turnoId, volunteerId },
+      });
+      return NextResponse.json({ ok: true, asignacion: { id: asig.id } });
+    }
+
+    if (accion === "estado-asignacion") {
+      if (!asignacionId || !estado) {
+        return NextResponse.json({ error: "asignacionId y estado requeridos" }, { status: 400 });
+      }
+      const data: Record<string, any> = { estado };
+      if (estado === "ACTIVO") data.inicioReal = new Date();
+      if (estado === "DESCANSANDO" || estado === "COMPLETADO") data.finReal = new Date();
+      await prisma.turnoVoluntario.update({ where: { id: asignacionId }, data });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (accion === "estado-turno") {
+      if (!turnoId || !estado) {
+        return NextResponse.json({ error: "turnoId y estado requeridos" }, { status: 400 });
+      }
+      await prisma.turno.update({ where: { id: turnoId }, data: { estado } });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (accion === "eliminar-asignacion") {
+      if (!asignacionId) {
+        return NextResponse.json({ error: "asignacionId requerido" }, { status: 400 });
+      }
+      await prisma.turnoVoluntario.delete({ where: { id: asignacionId } });
+      return NextResponse.json({ ok: true });
+    }
+
     return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -96,7 +149,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Codigo incorrecto" }, { status: 401 });
   }
 
-  const [needs, volunteers, missions, centers, inventory] = await Promise.all([
+  const [needs, volunteers, missions, centers, inventory, turnos] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
       orderBy: [{ createdAt: "desc" }],
@@ -133,6 +186,15 @@ export async function GET(req: NextRequest) {
     prisma.inventoryItem.findMany({
       orderBy: { categoria: "asc" },
       include: { center: { select: { nombre: true } } },
+    }),
+    prisma.turno.findMany({
+      where: { estado: { in: ["PROGRAMADO", "ACTIVO"] } },
+      orderBy: { inicio: "asc" },
+      include: {
+        asignaciones: {
+          include: { volunteer: { select: { id: true, nombre: true, celular: true, tipoAyuda: true, especializacion: true } } },
+        },
+      },
     }),
   ]);
 
@@ -176,5 +238,5 @@ export async function GET(req: NextRequest) {
     demandaCat[n.categoria] = (demandaCat[n.categoria] || 0) + 1;
   }
 
-  return NextResponse.json({ needs, volunteers, missions, centers, inventory, demandaItems, demandaCat });
+  return NextResponse.json({ needs, volunteers, missions, centers, inventory, turnos, demandaItems, demandaCat });
 }

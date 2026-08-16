@@ -98,6 +98,7 @@ model Volunteer {
   createdAt DateTime @default(now())
 
   missions Mission[]
+  turnos   TurnoVoluntario[]
 
   @@index([ciudad])
   @@index([tipoAyuda])
@@ -243,6 +244,48 @@ model ZoneReport {
   @@index([tipo, activo])
   @@index([zona])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// TURNOS / RELEVOS — gestión de descanso de rescatistas
+// ---------------------------------------------------------------------------
+
+model Turno {
+  id     String @id @default(cuid())
+  zona   String
+  titulo String @default("")
+
+  inicio DateTime
+  fin    DateTime
+
+  estado String @default("PROGRAMADO") // PROGRAMADO | ACTIVO | COMPLETADO | CANCELADO
+  notas  String @default("")
+
+  createdAt DateTime @default(now())
+
+  asignaciones TurnoVoluntario[]
+
+  @@index([zona])
+  @@index([estado])
+  @@index([inicio])
+}
+
+model TurnoVoluntario {
+  id          String @id @default(cuid())
+  turnoId     String
+  volunteerId String
+
+  estado     String    @default("ASIGNADO") // ASIGNADO | ACTIVO | DESCANSANDO | COMPLETADO
+  inicioReal DateTime?
+  finReal    DateTime?
+
+  createdAt DateTime @default(now())
+
+  turno     Turno     @relation(fields: [turnoId], references: [id])
+  volunteer Volunteer @relation(fields: [volunteerId], references: [id])
+
+  @@unique([turnoId, volunteerId])
+  @@index([volunteerId])
 }
 
 // ---------------------------------------------------------------------------

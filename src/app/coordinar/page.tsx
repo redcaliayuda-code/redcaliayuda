@@ -70,6 +70,30 @@ type Turno = {
   asignaciones: TurnoAsig[];
 };
 
+type Resc = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  celular: string;
+  zona: string;
+  especialidad: string;
+  equipo: string;
+  estado: string;
+  herramientasNecesita: string;
+};
+
+const ESPEC_RESC = [
+  { value: "topo", label: "Topo (busqueda bajo escombros)" },
+  { value: "busqueda_rescate", label: "Busqueda y rescate" },
+  { value: "paramedico", label: "Paramedico / Primeros auxilios" },
+  { value: "bombero", label: "Bombero" },
+  { value: "estructural", label: "Evaluacion estructural" },
+  { value: "logistica", label: "Logistica y transporte" },
+  { value: "comunicaciones", label: "Comunicaciones" },
+  { value: "apoyo_psicologico", label: "Apoyo psicologico" },
+  { value: "voluntario_general", label: "Voluntario general" },
+];
+
 type InvItem = {
   id: string;
   centerId: string;
@@ -168,6 +192,7 @@ export default function CoordinarPage() {
   const [inventory, setInventory] = useState<InvItem[]>([]);
   const [demanda, setDemanda] = useState<Record<string, number>>({});
   const [turnos, setTurnos] = useState<Turno[]>([]);
+  const [rescatistas, setRescatistas] = useState<Resc[]>([]);
 
   const [selectedNeed, setSelectedNeed] = useState<string | null>(null);
   const [tab, setTab] = useState<"necesidades" | "voluntarios" | "zonas" | "relevos" | "inventario" | "misiones">("necesidades");
@@ -194,6 +219,7 @@ export default function CoordinarPage() {
     setInventory(data.inventory || []);
     setDemanda(data.demandaItems || {});
     setTurnos(data.turnos || []);
+    setRescatistas(data.rescatistas || []);
   }, [code]);
 
   async function handleLogin() {
@@ -212,6 +238,7 @@ export default function CoordinarPage() {
       setInventory(data.inventory || []);
       setDemanda(data.demandaItems || {});
       setTurnos(data.turnos || []);
+      setRescatistas(data.rescatistas || []);
     } else {
       setError("Codigo incorrecto");
     }
@@ -1067,13 +1094,26 @@ export default function CoordinarPage() {
                           }}
                           className="w-full rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs"
                         >
-                          <option value="">+ Agregar voluntario al turno</option>
-                          {volunteers
-                            .filter((v) => !turno.asignaciones.some((a) => a.volunteer.id === v.id))
-                            .slice(0, 20)
-                            .map((v) => (
-                              <option key={v.id} value={v.id}>{v.nombre} — {TIPO_VOL[v.tipoAyuda]?.label || v.tipoAyuda}{v.especializacion ? ` (${v.especializacion})` : ""}</option>
-                            ))}
+                          <option value="">+ Agregar al turno</option>
+                          {(() => {
+                            const asignados = new Set(turno.asignaciones.map((a) => a.volunteer.id));
+                            const rescVols = volunteers.filter((v) => v.tipoAyuda === "ESPECIALISTA" && v.descripcion.startsWith("Rescatista RES-") && !asignados.has(v.id));
+                            const otrosVols = volunteers.filter((v) => !(v.tipoAyuda === "ESPECIALISTA" && v.descripcion.startsWith("Rescatista RES-")) && !asignados.has(v.id));
+                            return (
+                              <>
+                                {rescVols.length > 0 && <optgroup label="Rescatistas">
+                                  {rescVols.slice(0, 20).map((v) => (
+                                    <option key={v.id} value={v.id}>🦺 {v.nombre} — {v.especializacion || "Rescatista"}</option>
+                                  ))}
+                                </optgroup>}
+                                {otrosVols.length > 0 && <optgroup label="Voluntarios">
+                                  {otrosVols.slice(0, 20).map((v) => (
+                                    <option key={v.id} value={v.id}>🤝 {v.nombre} — {TIPO_VOL[v.tipoAyuda]?.label || v.tipoAyuda}{v.especializacion ? ` (${v.especializacion})` : ""}</option>
+                                  ))}
+                                </optgroup>}
+                              </>
+                            );
+                          })()}
                         </select>
                       </div>
                     </div>
@@ -1115,6 +1155,81 @@ export default function CoordinarPage() {
                 <input name="notas" placeholder="Notas (opcional)" className="w-full rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
                 <button type="submit" className="rounded-lg bg-acento px-4 py-1.5 text-xs font-bold text-superficie transition hover:opacity-90">
                   Crear turno
+                </button>
+              </form>
+            </div>
+
+            {/* Rescatistas registrados */}
+            <div className="rounded-xl border-2 border-aviso/30 bg-superficie p-4">
+              <h3 className="text-sm font-bold flex items-center gap-2">🦺 Rescatistas registrados <span className="rounded-full bg-aviso-suave px-2 py-0.5 text-xs font-bold text-aviso">{rescatistas.length}</span></h3>
+              {rescatistas.length === 0 ? (
+                <p className="mt-2 text-xs text-texto-suave">No hay rescatistas registrados. Usa el formulario de abajo.</p>
+              ) : (
+                <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                  {rescatistas.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg bg-fondo px-3 py-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold">{r.nombre}</span>
+                          <span className="rounded-full bg-aviso-suave px-1.5 py-0.5 text-[10px] font-bold text-aviso">{r.codigo}</span>
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${r.estado === "ACTIVO" ? "bg-ok-suave text-ok" : "bg-acento-suave text-acento"}`}>
+                            {r.estado === "ACTIVO" ? "Activo" : "Descansando"}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-[10px] text-texto-suave">
+                          {r.especialidad && <span className="mr-2">{ESPEC_RESC.find((e) => e.value === r.especialidad)?.label || r.especialidad}</span>}
+                          <span className="mr-2">📍 {r.zona}</span>
+                          {r.equipo && <span>👥 {r.equipo}</span>}
+                        </div>
+                        {r.herramientasNecesita && (
+                          <div className="mt-0.5 text-[10px] text-alerta font-medium">Necesita: {r.herramientasNecesita}</div>
+                        )}
+                      </div>
+                      {r.celular && (
+                        <a href={`https://wa.me/57${r.celular}`} target="_blank" rel="noopener noreferrer" className="text-ok text-sm shrink-0">💬</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Registrar rescatista */}
+            <div className="rounded-xl border-2 border-aviso/20 bg-superficie p-4">
+              <h3 className="text-sm font-bold">Registrar rescatista</h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const fd = new FormData(form);
+                  await doAction("registrar-rescatista", {
+                    nombre: fd.get("nombre") as string,
+                    celular: fd.get("celular") as string,
+                    zona: fd.get("zona") as string,
+                    especialidad: fd.get("especialidad") as string,
+                    equipo: fd.get("equipo") as string,
+                  });
+                  form.reset();
+                }}
+                className="mt-2 space-y-2"
+              >
+                <div className="flex gap-2">
+                  <input name="nombre" required placeholder="Nombre completo" className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                  <input name="celular" placeholder="Celular (opcional)" className="w-28 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                </div>
+                <div className="flex gap-2">
+                  <select name="zona" required className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs">
+                    <option value="">Zona</option>
+                    {zonas.map((z) => <option key={z} value={z}>{z}</option>)}
+                  </select>
+                  <select name="especialidad" className="flex-1 rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs">
+                    <option value="">Especialidad</option>
+                    {ESPEC_RESC.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+                  </select>
+                </div>
+                <input name="equipo" placeholder="Equipo/grupo (opcional)" className="w-full rounded-lg border border-borde bg-fondo px-2 py-1.5 text-xs" />
+                <button type="submit" className="rounded-lg bg-aviso px-4 py-1.5 text-xs font-bold text-superficie transition hover:opacity-90">
+                  🦺 Registrar rescatista
                 </button>
               </form>
             </div>

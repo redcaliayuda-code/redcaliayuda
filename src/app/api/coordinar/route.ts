@@ -138,6 +138,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (accion === "registrar-rescatista") {
+      const { nombre, celular, especialidad, equipo, herramientasTiene, herramientasNecesita } = body;
+      if (!nombre || !zona) {
+        return NextResponse.json({ error: "nombre y zona requeridos" }, { status: 400 });
+      }
+      const count = await prisma.rescatista.count();
+      const codigo = `RES-${String(count + 1).padStart(4, "0")}`;
+      const rescatista = await prisma.rescatista.create({
+        data: {
+          codigo,
+          nombre,
+          celular: celular || "",
+          zona,
+          especialidad: especialidad || "",
+          equipo: equipo || "",
+          herramientasTiene: herramientasTiene || "",
+          herramientasNecesita: herramientasNecesita || "",
+        },
+      });
+      const volCount = await prisma.volunteer.count();
+      const volCodigo = `VOL-${String(volCount + 1).padStart(4, "0")}`;
+      const celularVal = celular || `res-${codigo}`;
+      const existing = celular ? await prisma.volunteer.findUnique({ where: { celular } }) : null;
+      if (!existing) {
+        await prisma.volunteer.create({
+          data: {
+            codigo: volCodigo,
+            nombre,
+            celular: celularVal,
+            zona,
+            tipoAyuda: "ESPECIALISTA",
+            especializacion: especialidad || "rescatista",
+            descripcion: `Rescatista ${codigo}${equipo ? ` — ${equipo}` : ""}`,
+            recursosOfrecidos: herramientasTiene || "",
+          },
+        });
+      }
+      return NextResponse.json({ ok: true, codigo: rescatista.codigo });
+    }
+
     return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -149,7 +189,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Codigo incorrecto" }, { status: 401 });
   }
 
-  const [needs, volunteers, missions, centers, inventory, turnos] = await Promise.all([
+  const [needs, volunteers, missions, centers, inventory, turnos, rescatistas] = await Promise.all([
     prisma.need.findMany({
       where: { estadoResolucion: { in: ["PENDIENTE", "EN_PROCESO"] } },
       orderBy: [{ createdAt: "desc" }],
@@ -196,6 +236,11 @@ export async function GET(req: NextRequest) {
         },
       },
     }),
+    prisma.rescatista.findMany({
+      where: { estado: { not: "INACTIVO" } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, codigo: true, nombre: true, celular: true, zona: true, especialidad: true, equipo: true, estado: true, herramientasNecesita: true },
+    }),
   ]);
 
   const ITEMS_KEYWORDS: [string, string[]][] = [
@@ -238,5 +283,5 @@ export async function GET(req: NextRequest) {
     demandaCat[n.categoria] = (demandaCat[n.categoria] || 0) + 1;
   }
 
-  return NextResponse.json({ needs, volunteers, missions, centers, inventory, turnos, demandaItems, demandaCat });
+  return NextResponse.json({ needs, volunteers, missions, centers, inventory, turnos, rescatistas, demandaItems, demandaCat });
 }

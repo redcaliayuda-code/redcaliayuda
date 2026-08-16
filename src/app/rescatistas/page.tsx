@@ -19,6 +19,7 @@ type Rescatista = {
 };
 
 const ESPECIALIDADES = [
+  { value: "topo", label: "Topo (busqueda bajo escombros)" },
   { value: "busqueda_rescate", label: "Busqueda y rescate" },
   { value: "paramedico", label: "Paramedico / Primeros auxilios" },
   { value: "bombero", label: "Bombero" },
